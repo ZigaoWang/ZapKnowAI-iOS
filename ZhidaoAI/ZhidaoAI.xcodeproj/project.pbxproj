@@ -6,27 +6,8 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXContainerItemProxy section */
-		E286F79E2D817DB100F07810 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E286F7842D817DAD00F07810 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E286F78B2D817DAD00F07810;
-			remoteInfo = ZhidaoAI;
-		};
-		E286F7A82D817DB100F07810 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E286F7842D817DAD00F07810 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E286F78B2D817DAD00F07810;
-			remoteInfo = ZhidaoAI;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		E286F78C2D817DAD00F07810 /* ZhidaoAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZhidaoAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E286F79D2D817DB100F07810 /* ZhidaoAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZhidaoAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E286F7A72D817DB100F07810 /* ZhidaoAIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZhidaoAIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -55,20 +36,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E286F79A2D817DB100F07810 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E286F7A42D817DB100F07810 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -86,8 +53,6 @@
 			isa = PBXGroup;
 			children = (
 				E286F78C2D817DAD00F07810 /* ZhidaoAI.app */,
-				E286F79D2D817DB100F07810 /* ZhidaoAITests.xctest */,
-				E286F7A72D817DB100F07810 /* ZhidaoAIUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -117,52 +82,6 @@
 			productReference = E286F78C2D817DAD00F07810 /* ZhidaoAI.app */;
 			productType = "com.apple.product-type.application";
 		};
-		E286F79C2D817DB100F07810 /* ZhidaoAITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = E286F7B42D817DB100F07810 /* Build configuration list for PBXNativeTarget "ZhidaoAITests" */;
-			buildPhases = (
-				E286F7992D817DB100F07810 /* Sources */,
-				E286F79A2D817DB100F07810 /* Frameworks */,
-				E286F79B2D817DB100F07810 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				E286F79F2D817DB100F07810 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				E286F7A02D817DB100F07810 /* ZhidaoAITests */,
-			);
-			name = ZhidaoAITests;
-			packageProductDependencies = (
-			);
-			productName = ZhidaoAITests;
-			productReference = E286F79D2D817DB100F07810 /* ZhidaoAITests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		E286F7A62D817DB100F07810 /* ZhidaoAIUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = E286F7B72D817DB100F07810 /* Build configuration list for PBXNativeTarget "ZhidaoAIUITests" */;
-			buildPhases = (
-				E286F7A32D817DB100F07810 /* Sources */,
-				E286F7A42D817DB100F07810 /* Frameworks */,
-				E286F7A52D817DB100F07810 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				E286F7A92D817DB100F07810 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				E286F7AA2D817DB100F07810 /* ZhidaoAIUITests */,
-			);
-			name = ZhidaoAIUITests;
-			packageProductDependencies = (
-			);
-			productName = ZhidaoAIUITests;
-			productReference = E286F7A72D817DB100F07810 /* ZhidaoAIUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -175,14 +94,6 @@
 				TargetAttributes = {
 					E286F78B2D817DAD00F07810 = {
 						CreatedOnToolsVersion = 16.2;
-					};
-					E286F79C2D817DB100F07810 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = E286F78B2D817DAD00F07810;
-					};
-					E286F7A62D817DB100F07810 = {
-						CreatedOnToolsVersion = 16.2;
-						TestTargetID = E286F78B2D817DAD00F07810;
 					};
 				};
 			};
@@ -201,28 +112,12 @@
 			projectRoot = "";
 			targets = (
 				E286F78B2D817DAD00F07810 /* ZhidaoAI */,
-				E286F79C2D817DB100F07810 /* ZhidaoAITests */,
-				E286F7A62D817DB100F07810 /* ZhidaoAIUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		E286F78A2D817DAD00F07810 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E286F79B2D817DB100F07810 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E286F7A52D817DB100F07810 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -239,34 +134,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E286F7992D817DB100F07810 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		E286F7A32D817DB100F07810 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		E286F79F2D817DB100F07810 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E286F78B2D817DAD00F07810 /* ZhidaoAI */;
-			targetProxy = E286F79E2D817DB100F07810 /* PBXContainerItemProxy */;
-		};
-		E286F7A92D817DB100F07810 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E286F78B2D817DAD00F07810 /* ZhidaoAI */;
-			targetProxy = E286F7A82D817DB100F07810 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		E286F7AF2D817DB100F07810 /* Debug */ = {
@@ -394,6 +262,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"ZhidaoAI/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ZhiDao AI";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -431,6 +300,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"ZhidaoAI/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "ZhiDao AI";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -457,92 +327,6 @@
 			};
 			name = Release;
 		};
-		E286F7B52D817DB100F07810 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pacerclub.ZhidaoAITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ZhidaoAI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ZhidaoAI";
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Debug;
-		};
-		E286F7B62D817DB100F07810 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pacerclub.ZhidaoAITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ZhidaoAI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ZhidaoAI";
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Release;
-		};
-		E286F7B82D817DB100F07810 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pacerclub.ZhidaoAIUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = ZhidaoAI;
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Debug;
-		};
-		E286F7B92D817DB100F07810 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
-				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.pacerclub.ZhidaoAIUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = auto;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = ZhidaoAI;
-				XROS_DEPLOYMENT_TARGET = 2.2;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -560,24 +344,6 @@
 			buildConfigurations = (
 				E286F7B22D817DB100F07810 /* Debug */,
 				E286F7B32D817DB100F07810 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		E286F7B42D817DB100F07810 /* Build configuration list for PBXNativeTarget "ZhidaoAITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				E286F7B52D817DB100F07810 /* Debug */,
-				E286F7B62D817DB100F07810 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		E286F7B72D817DB100F07810 /* Build configuration list for PBXNativeTarget "ZhidaoAIUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				E286F7B82D817DB100F07810 /* Debug */,
-				E286F7B92D817DB100F07810 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
