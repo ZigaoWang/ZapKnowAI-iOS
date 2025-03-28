@@ -12,6 +12,8 @@ struct ZhiDaoAIApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.light) // Start with light mode by default
+                .accentColor(.blue)
         }
     }
 }
