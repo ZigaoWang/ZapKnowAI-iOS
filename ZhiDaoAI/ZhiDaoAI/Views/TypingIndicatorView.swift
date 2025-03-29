@@ -5,8 +5,6 @@ struct TypingIndicatorView: View {
     @State private var showFirstDot = false
     @State private var showSecondDot = false
     @State private var showThirdDot = false
-    @Environment(\.colorScheme) private var colorScheme
-    @AppStorage("isDarkMode") private var isDarkMode = false
     
     var body: some View {
         HStack(spacing: 4) {
@@ -30,7 +28,7 @@ struct TypingIndicatorView: View {
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                .fill(Color.white)
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
         )
         .overlay(
@@ -69,14 +67,20 @@ struct TypingIndicatorView: View {
     }
     
     private func startAnimation() {
-        showFirstDot = true
+        withAnimation {
+            showFirstDot = true
+        }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            showSecondDot = true
+            withAnimation {
+                showSecondDot = true
+            }
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            showThirdDot = true
+            withAnimation {
+                showThirdDot = true
+            }
         }
     }
 }

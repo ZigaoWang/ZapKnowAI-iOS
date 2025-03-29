@@ -10,14 +10,14 @@ struct MarkdownView_Native: View {
     /// Optional callback for handling citation or link taps
     var onLinkTap: ((URL) -> Void)?
     
-    /// Extracts citations in the format [Author2022] from the given text.
+    /// Extracts citations in the format [^1], [^2], etc. or [Author2022] from the given text.
     /// - Parameter text: The text to parse for citations
     /// - Returns: An array of tuples containing the range of the citation in the original text and the citation key
     private func extractCitations(_ text: String) -> [(Range<String.Index>, String)] {
         var citations: [(Range<String.Index>, String)] = []
         
-        // Find all citation matches - pattern like [Author2022]
-        let pattern = "\\[(\\w+\\d{4})\\]"
+        // Find all citation matches - pattern like [^1] or [Author2022]
+        let pattern = "\\[(\\^\\d+|\\w+\\d{4})\\]"
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
             return []
         }
@@ -125,11 +125,7 @@ struct MarkdownView_Native: View {
     private func processInlineFormatting(_ text: String) -> String {
         var processedText = text
         
-        // Note: In a full implementation, this would handle more markdown features
-        // such as bold, italic, links, etc. For now, we only handle code blocks
-        // as we're focusing on getting the essential streaming functionality working first.
-        
-        // Process inline code first to avoid conflicts
+        // Process inline code
         if let regex = try? NSRegularExpression(pattern: "`([^`]+)`", options: []) {
             processedText = regex.stringByReplacingMatches(
                 in: processedText,
@@ -139,8 +135,25 @@ struct MarkdownView_Native: View {
             )
         }
         
-        // Future enhancement: process bold and italic text
-        // This could be implemented with similar regex patterns for **bold** and *italic*
+        // Process bold text
+        if let regex = try? NSRegularExpression(pattern: "\\*\\*([^\\*]+)\\*\\*", options: []) {
+            processedText = regex.stringByReplacingMatches(
+                in: processedText,
+                options: [],
+                range: NSRange(processedText.startIndex..<processedText.endIndex, in: processedText),
+                withTemplate: "$1"
+            )
+        }
+        
+        // Process italic text
+        if let regex = try? NSRegularExpression(pattern: "\\*([^\\*]+)\\*", options: []) {
+            processedText = regex.stringByReplacingMatches(
+                in: processedText,
+                options: [],
+                range: NSRange(processedText.startIndex..<processedText.endIndex, in: processedText),
+                withTemplate: "$1"
+            )
+        }
         
         return processedText
     }
@@ -162,9 +175,8 @@ struct MarkdownView_Native: View {
                 result.append((beforeText, false, nil))
             }
             
-            // Add the citation
-            let citation = String(text[range])
-            result.append((citation, true, key))
+            // Add the citation - we'll only add the key, not the brackets
+            result.append((key, true, key))
             
             // Move current index to after this citation
             currentIndex = range.upperBound
@@ -189,15 +201,20 @@ struct MarkdownView_Native: View {
         
         // Combine all parts into a single Text view
         for (text, isCitation, _) in parts {
-            // Style based on whether it's a citation or regular text
-            let textPart = isCitation 
-                ? Text(text)
-                    .foregroundColor(.blue)
-                    .fontWeight(.bold) // Citation styling
-                : Text(text) // Regular text styling
+            if isCitation {
+                // For citations, apply superscript styling
+                let citationPart = Text(text)
+                    .font(.system(size: 10))
+                    .baselineOffset(5)
+                    .foregroundColor(Color(hex: "3B82F6"))
                 
-            // Concatenate with existing text
-            result = result + textPart
+                // Concatenate with existing text
+                result = result + citationPart
+            } else {
+                // For regular text, just add it normally
+                let textPart = Text(processInlineFormatting(text))
+                result = result + textPart
+            }
         }
         
         return result
@@ -221,7 +238,7 @@ struct MarkdownView_Native_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             // Standard preview
-            MarkdownView_Native(markdown: "# Test Heading\n\nThis is some test markdown with **bold** and *italic* text.\n\nAnd a citation [Smith2022].\n\n- List item 1\n- List item 2 with [Jones2023] citation")
+            MarkdownView_Native(markdown: "# Test Heading\n\nThis is some test markdown with **bold** and *italic* text.\n\nAnd a citation [^1] or [Smith2022].\n\n- List item 1\n- List item 2 with [^2] citation")
                 .padding()
                 .previewLayout(.sizeThatFits)
                 .previewDisplayName("Standard Content")
@@ -234,7 +251,7 @@ struct MarkdownView_Native_Previews: PreviewProvider {
                 .previewDisplayName("Empty State")
             
             // Dark mode preview
-            MarkdownView_Native(markdown: "# Dark Mode Test\n\nCitations like [Smith2022] should be visible in dark mode too.")
+            MarkdownView_Native(markdown: "# Dark Mode Test\n\nCitations like [Smith2022] and [^1] should be visible in dark mode too.")
                 .padding()
                 .previewLayout(.sizeThatFits)
                 .preferredColorScheme(.dark)
