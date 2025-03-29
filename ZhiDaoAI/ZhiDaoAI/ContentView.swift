@@ -14,13 +14,14 @@ struct ContentView: View {
     @State private var isSearchFocused = false
     @State private var showClearButton = false
     @State private var isTyping = false
-    @State private var showSearchTips = false
     @State private var isDirectAnswer = false
+    @State private var isDarkMode = false
+    @State private var showSettings = false
     
     // Animation states
     @State private var showPlaceholder = true
     @State private var searchBarOffset: CGFloat = 0
-    @State private var searchTipsHeight: CGFloat = 0
+    @State private var animateGradient = false
     
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = "输入您的研究问题..."
@@ -30,6 +31,7 @@ struct ContentView: View {
             // Background gradient
             backgroundGradient
                 .ignoresSafeArea()
+                .animation(.easeInOut(duration: 3).repeatForever(autoreverses: true), value: animateGradient)
             
             VStack(spacing: 0) {
                 // App header
@@ -46,7 +48,10 @@ struct ContentView: View {
                     statusMessageView(service.statusMessage)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
-                        .transition(.opacity)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity),
+                            removal: .opacity
+                        ))
                 }
                 
                 ScrollView {
@@ -60,7 +65,7 @@ struct ContentView: View {
                             .padding(.horizontal, 16)
                             .padding(.top, 8)
                             .padding(.bottom, 8)
-                            .transition(.opacity)
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         }
                         
                         // Papers list - only show when in paper retrieval or analysis stage
@@ -73,7 +78,10 @@ struct ContentView: View {
                                 }
                             )
                             .padding(.horizontal, 16)
-                            .transition(.opacity)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .bottom).combined(with: .opacity),
+                                removal: .opacity
+                            ))
                         }
                         
                         // Answer section
@@ -81,7 +89,10 @@ struct ContentView: View {
                             answerView
                                 .padding(.horizontal, 16)
                                 .padding(.bottom, 16)
-                                .transition(.opacity)
+                                .transition(.asymmetric(
+                                    insertion: .scale(scale: 0.95).combined(with: .opacity),
+                                    removal: .opacity
+                                ))
                         }
                     }
                     .padding(.bottom, 16)
@@ -90,6 +101,18 @@ struct ContentView: View {
                 .animation(.easeInOut(duration: 0.3), value: service.isStreaming)
                 .animation(.easeInOut(duration: 0.3), value: service.papers.count)
                 .animation(.easeInOut(duration: 0.3), value: service.accumulatedTokens)
+            }
+            
+            // Settings panel
+            if showSettings {
+                settingsPanel
+                    .transition(.move(edge: .trailing))
+            }
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
+        .onAppear {
+            withAnimation {
+                animateGradient = true
             }
         }
         .onChange(of: service.isStreaming) { _, isStreaming in
@@ -121,13 +144,12 @@ struct ContentView: View {
     private var backgroundGradient: some View {
         LinearGradient(
             gradient: Gradient(
-                colors: [
-                    Color(hex: "F9FAFB"),
-                    Color(hex: "F3F4F6")
-                ]
+                colors: isDarkMode ? 
+                    [Color(hex: "121212"), Color(hex: "1E1E1E")] :
+                    [Color(hex: "F0F4FF"), Color(hex: "E6F0FF")]
             ),
-            startPoint: .top,
-            endPoint: .bottom
+            startPoint: animateGradient ? .topLeading : .bottomTrailing,
+            endPoint: animateGradient ? .bottomTrailing : .topLeading
         )
     }
     
@@ -136,25 +158,44 @@ struct ContentView: View {
         HStack {
             Text("知道 AI")
                 .font(.system(size: 28, weight: .bold))
-                .foregroundColor(Color(hex: "111827"))
+                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.clear, radius: 2, x: 0, y: 1)
             
             Spacer()
             
-            // Info button
+            // Theme toggle button
             Button(action: {
-                if let url = URL(string: "https://github.com/zigaowang") {
-                    UIApplication.shared.open(url)
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isDarkMode.toggle()
+                }
+            }) {
+                Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(isDarkMode ? .yellow : Color(hex: "6B7280"))
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                    )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            // Settings button
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    showSettings.toggle()
                 }
             }) {
                 Image(systemName: "info.circle")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color(hex: "111827"))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     .padding(10)
                     .background(
                         Circle()
-                            .fill(Color(hex: "F3F4F6"))
+                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                     )
             }
+            .buttonStyle(ScaleButtonStyle())
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
@@ -164,16 +205,18 @@ struct ContentView: View {
     private var searchBar: some View {
         ZStack(alignment: .leading) {
             // Background
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
             
             HStack(spacing: 12) {
-                // Search icon
+                // Search icon with animation
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16))
-                    .foregroundColor(Color(hex: "9CA3AF"))
+                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                     .padding(.leading, 16)
+                    .scaleEffect(isSearchFocused ? 1.1 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSearchFocused)
                 
                 // Text field
                 ZStack(alignment: .leading) {
@@ -181,13 +224,13 @@ struct ContentView: View {
                     if query.isEmpty && !isSearchFocused {
                         Text(placeholderText)
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "9CA3AF"))
+                            .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                             .padding(.leading, 2)
                     }
                     
                     TextField("", text: $query)
                         .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "374151"))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
                         .frame(height: searchBarHeight)
                         .onTapGesture {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -213,10 +256,11 @@ struct ContentView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(hex: "9CA3AF"))
+                            .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                     }
                     .padding(.trailing, 16)
                     .transition(.opacity)
+                    .buttonStyle(ScaleButtonStyle())
                 }
                 
                 // Search button
@@ -229,7 +273,8 @@ struct ContentView: View {
                             .foregroundColor(Color(hex: "3B82F6"))
                     }
                     .padding(.trailing, 16)
-                    .transition(.opacity)
+                    .transition(.scale.combined(with: .opacity))
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
         }
@@ -240,8 +285,9 @@ struct ContentView: View {
     private func statusMessageView(_ status: String) -> some View {
         HStack(spacing: 12) {
             if isTyping {
-                ProgressView()
-                    .scaleEffect(0.8)
+                // Animated loading indicator
+                LoadingDotsView()
+                    .frame(width: 40, height: 10)
             } else {
                 Image(systemName: "info.circle")
                     .font(.system(size: 16))
@@ -250,22 +296,22 @@ struct ContentView: View {
             
             Text(status)
                 .font(.system(size: 14))
-                .foregroundColor(Color(hex: "374151"))
+                .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
                 .lineLimit(2)
             
             Spacer()
         }
-        .padding(12)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
     }
     
     // MARK: - Answer View
     private var answerView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             // Answer header
             HStack(spacing: 12) {
                 Image(systemName: "text.bubble")
@@ -274,57 +320,149 @@ struct ContentView: View {
                 
                 Text("回答")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "111827"))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
                 Spacer()
                 
                 // Show generating status when generating answer
                 if isGeneratingResponse && service.accumulatedTokens.isEmpty {
-                    ProgressView()
-                        .scaleEffect(0.8)
+                    LoadingDotsView()
+                        .frame(width: 40, height: 10)
                 }
                 
                 // Copy button
                 if !service.accumulatedTokens.isEmpty {
                     Button(action: {
                         UIPasteboard.general.string = service.accumulatedTokens
+                        // Add haptic feedback
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
                     }) {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(hex: "111827"))
+                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F3F4F6"))
+                            )
                     }
+                    .buttonStyle(ScaleButtonStyle())
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             
             // Answer content
             VStack(alignment: .leading, spacing: 0) {
                 // Markdown content
                 MarkdownView_Native(markdown: service.accumulatedTokens)
-                    .padding(12)
+                    .padding(16)
+                    .environment(\.colorScheme, isDarkMode ? .dark : .light)
                 
                 // Typing indicator
                 if isTyping {
                     HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
+                        LoadingDotsView()
+                            .frame(width: 40, height: 10)
                             .padding(.vertical, 8)
                         Spacer()
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 4)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
                 }
             }
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            .background(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+            .cornerRadius(16)
+            .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         }
+    }
+    
+    // MARK: - Settings Panel
+    private var settingsPanel: some View {
+        ZStack(alignment: .topTrailing) {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("关于")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .padding(.top, 20)
+                
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("知道 AI")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Text("由 Zigao Wang 开发")
+                        .font(.system(size: 14))
+                        .foregroundColor(isDarkMode ? Color(hex: "D1D5DB") : Color(hex: "6B7280"))
+                    
+                    Button(action: {
+                        if let url = URL(string: "https://github.com/zigaowang") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "link")
+                                .font(.system(size: 14))
+                            Text("GitHub")
+                                .font(.system(size: 14))
+                        }
+                        .foregroundColor(Color(hex: "3B82F6"))
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                    .padding(.top, 4)
+                }
+                .padding(.top, 8)
+                
+                Spacer()
+            }
+            .padding(24)
+            .frame(width: UIScreen.main.bounds.width * 0.8)
+            .background(
+                isDarkMode ? Color(hex: "1A1A1A") : Color.white
+            )
+            .cornerRadius(20, corners: [.topLeft, .bottomLeft])
+            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+            
+            // Close button
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    showSettings = false
+                }
+            }) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .padding(12)
+                    .background(
+                        Circle()
+                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            .padding(20)
+        }
+        .edgesIgnoringSafeArea(.all)
+        .background(
+            Color.black.opacity(0.4)
+                .edgesIgnoringSafeArea(.all)
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        showSettings = false
+                    }
+                }
+        )
     }
     
     // MARK: - Actions
     private func startSearch() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        
+        // Add haptic feedback
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
         
         withAnimation {
             isSearchFocused = false
@@ -333,6 +471,58 @@ struct ContentView: View {
         }
         
         service.streamQuestion(query: query)
+    }
+}
+
+// MARK: - Custom Button Style
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Loading Dots View
+struct LoadingDotsView: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<3) { index in
+                Circle()
+                    .fill(Color(hex: "3B82F6"))
+                    .frame(width: 6, height: 6)
+                    .scaleEffect(isAnimating ? 1 : 0.5)
+                    .opacity(isAnimating ? 1 : 0.5)
+                    .animation(
+                        Animation.easeInOut(duration: 0.6)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.2),
+                        value: isAnimating
+                    )
+            }
+        }
+        .onAppear {
+            isAnimating = true
+        }
+    }
+}
+
+// MARK: - RoundedCorner Extension
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
     }
 }
 
