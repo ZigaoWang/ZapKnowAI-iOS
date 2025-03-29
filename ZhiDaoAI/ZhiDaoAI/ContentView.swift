@@ -137,7 +137,7 @@ struct ContentView: View {
     }
     
     private var isGeneratingResponse: Bool {
-        return service.currentStage == .answerGeneration || service.isStreaming
+        return service.currentStage == .answerGeneration
     }
     
     // MARK: - Background Gradient
@@ -360,8 +360,8 @@ struct ContentView: View {
                     .padding(16)
                     .environment(\.colorScheme, isDarkMode ? .dark : .light)
                 
-                // Typing indicator
-                if isTyping {
+                // Typing indicator - only show when actively generating the answer
+                if isTyping && isGeneratingResponse {
                     HStack {
                         LoadingDotsView()
                             .frame(width: 40, height: 10)
