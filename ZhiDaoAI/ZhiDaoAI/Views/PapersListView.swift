@@ -5,9 +5,14 @@ struct PapersListView: View {
     var papers: [Paper]
     var onPaperTap: ((Paper) -> Void)?
     @State private var expandedPaperIndex: Int? = nil
+    @Environment(\.colorScheme) private var colorScheme
+    
+    private var isDarkMode: Bool {
+        return colorScheme == .dark
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             // Header
             HStack(spacing: 12) {
                 Image(systemName: "doc.text")
@@ -15,47 +20,78 @@ struct PapersListView: View {
                     .foregroundColor(Color(hex: "3B82F6"))
                 
                 Text("相关论文")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Color(hex: "111827"))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
                 Spacer()
                 
                 Text("\(papers.count)篇")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "6B7280"))
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F3F4F6"))
+                    )
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 20)
             
             // Papers list
-            LazyVStack(spacing: 8) {
-                ForEach(Array(papers.enumerated()), id: \.element.id) { index, paper in
-                    PaperItemView(
-                        paper: paper,
-                        index: index,
-                        isExpanded: expandedPaperIndex == index
-                    )
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            if expandedPaperIndex == index {
-                                expandedPaperIndex = nil
-                            } else {
-                                expandedPaperIndex = index
+            if papers.isEmpty {
+                emptyStateView
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(Array(papers.enumerated()), id: \.element.id) { index, paper in
+                            PaperItemView(
+                                paper: paper,
+                                index: index,
+                                isExpanded: expandedPaperIndex == index,
+                                isDarkMode: isDarkMode
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if expandedPaperIndex == index {
+                                        expandedPaperIndex = nil
+                                    } else {
+                                        expandedPaperIndex = index
+                                    }
+                                }
+                                
+                                if let onPaperTap = onPaperTap {
+                                    onPaperTap(paper)
+                                }
                             }
-                        }
-                        
-                        if let onPaperTap = onPaperTap {
-                            onPaperTap(paper)
+                            .frame(width: 280)
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 8)
                 }
+                .padding(.top, 8)
             }
         }
-        .padding(12)
+        .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
-                .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 20)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
         )
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.2)
+                .padding(.bottom, 8)
+            
+            Text("正在查找相关论文...")
+                .font(.system(size: 16, design: .rounded))
+                .foregroundColor(isDarkMode ? .white : .secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 40)
     }
 }
 
@@ -63,119 +99,128 @@ struct PaperItemView: View {
     var paper: Paper
     var index: Int
     var isExpanded: Bool
+    var isDarkMode: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Paper header
-            HStack(alignment: .top, spacing: 10) {
-                // Paper index
-                Text("\(index + 1)")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(width: 24, height: 24)
-                    .background(Circle().fill(Color(hex: "3B82F6")))
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    // Title
-                    Text(paper.title)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(Color(hex: "111827"))
-                        .lineLimit(isExpanded ? nil : 2)
+            VStack(alignment: .leading, spacing: 12) {
+                // Paper index and title
+                HStack(alignment: .top, spacing: 12) {
+                    // Paper index
+                    Text("\(index + 1)")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.white)
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(Color(hex: "3B82F6")))
                     
-                    // Authors and year
-                    HStack(spacing: 6) {
-                        Text(paper.authors)
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(hex: "6B7280"))
-                            .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Title
+                        Text(paper.title)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                            .lineLimit(isExpanded ? nil : 2)
                         
-                        Text("·")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(hex: "9CA3AF"))
+                        // Authors and year
+                        HStack(spacing: 6) {
+                            Text(paper.authors)
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                                .lineLimit(1)
+                            
+                            Text("·")
+                                .font(.system(size: 13))
+                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                            
+                            Text(paper.year)
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                        }
                         
-                        Text(paper.year)
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(hex: "6B7280"))
-                    }
-                    
-                    // Source badge if available
-                    if let source = paper.source, !source.isEmpty {
-                        SourceBadge(source: source)
-                            .padding(.top, 4)
+                        // Source badge if available
+                        if let source = paper.source, !source.isEmpty {
+                            SourceBadge(source: source, isDarkMode: isDarkMode)
+                        }
                     }
                 }
                 
-                Spacer()
-                
                 // Expand/collapse indicator
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(hex: "9CA3AF"))
+                HStack {
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14))
+                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F3F4F6"))
+                        )
+                }
             }
-            .padding(12)
+            .padding(16)
             
             // Paper details (when expanded)
             if isExpanded {
                 Divider()
-                    .padding(.horizontal, 12)
+                    .background(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "E5E7EB"))
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     // Abstract
                     if let abstract = paper.abstract, !abstract.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("摘要")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "6B7280"))
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             
                             Text(abstract)
-                                .font(.system(size: 14))
-                                .foregroundColor(Color(hex: "111827"))
+                                .font(.system(size: 14, design: .rounded))
+                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.horizontal, 12)
                     }
                     
                     // URL
                     if !paper.link.isEmpty {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("链接")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color(hex: "6B7280"))
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             
                             if let validURL = URL(string: paper.link) {
                                 Link(paper.link, destination: validURL)
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 14, design: .rounded))
                                     .foregroundColor(Color(hex: "3B82F6"))
                             } else {
                                 Text(paper.link)
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 14, design: .rounded))
                                     .foregroundColor(Color(hex: "3B82F6"))
                             }
                         }
-                        .padding(.horizontal, 12)
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(16)
             }
         }
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.03), radius: 2, x: 0, y: 1)
+        .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+        .cornerRadius(16)
+        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 
 struct SourceBadge: View {
     var source: String
+    var isDarkMode: Bool
     
     var body: some View {
         Text(source)
-            .font(.system(size: 12))
+            .font(.system(size: 12, weight: .medium, design: .rounded))
             .foregroundColor(Color(hex: "3B82F6"))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
             .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(hex: "3B82F6").opacity(0.1))
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isDarkMode ? Color(hex: "3B82F6").opacity(0.2) : Color(hex: "3B82F6").opacity(0.1))
             )
     }
 }
