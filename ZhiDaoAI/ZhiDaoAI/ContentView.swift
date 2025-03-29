@@ -6,327 +6,416 @@
 //
 
 import SwiftUI
-import SafariServices
-
-// Importing both views to avoid breaking changes during transition
-import WebKit
+import Combine
 
 struct ContentView: View {
-    @StateObject private var zhiDaoService = ZhiDaoService()
-    @State private var question = ""
-    @State private var showingPaperDetail: Paper? = nil
-    @State private var focusedCitationKey: String? = nil
-    @State private var scrollToEnd = false
-    @State private var isKeyboardVisible = false
-    @State private var lastTokensCount = 0
-    @FocusState private var isInputFocused: Bool
+    @StateObject private var service = ZhiDaoService()
+    @State private var query = ""
+    @State private var isSearchFocused = false
+    @State private var showClearButton = false
+    @State private var isTyping = false
+    @State private var showSearchTips = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    @State private var isDirectAnswer = false
     
-    private var placeholders = [
-        "例如: 量子计算在密码学中的应用是什么?",
-        "例如: 深度学习如何改变自然语言处理?",
-        "例如: 气候变化对全球粮食安全有什么影响?",
-        "例如: 最新的癌症免疫疗法研究进展是什么?",
-        "例如: 区块链技术如何应用于供应链管理?"
-    ]
-    @State private var currentPlaceholder = 0
+    // Animation states
+    @State private var showPlaceholder = true
+    @State private var searchBarOffset: CGFloat = 0
+    @State private var searchTipsHeight: CGFloat = 0
     
-    // Derived values from service state
-    private var completedStages: Set<ProgressStage> {
-        var completed = Set<ProgressStage>()
-        
-        // Add stages that should be considered "completed"
-        if zhiDaoService.currentStage == .paperRetrieval {
-            completed.insert(.evaluation)
-        } else if zhiDaoService.currentStage == .paperAnalysis {
-            completed.insert(.evaluation)
-            completed.insert(.paperRetrieval)
-        } else if zhiDaoService.currentStage == .answerGeneration {
-            completed.insert(.evaluation)
-            completed.insert(.paperRetrieval)
-            completed.insert(.paperAnalysis)
-        } else if zhiDaoService.isComplete {
-            completed.insert(.evaluation)
-            completed.insert(.paperRetrieval)
-            completed.insert(.paperAnalysis)
-            completed.insert(.answerGeneration)
-        }
-        
-        return completed
-    }
+    private let searchBarHeight: CGFloat = 50
+    private let placeholderText = "输入您的研究问题..."
     
     var body: some View {
-        NavigationView {
-            ScrollViewReader { scrollViewProxy in
+        ZStack {
+            // Background gradient
+            backgroundGradient
+                .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // App header
+                appHeader
+                
+                // Search bar
+                searchBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                
+                // Search tips
+                if showSearchTips {
+                    searchTipsView
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                
+                // Status message
+                if !service.statusMessage.isEmpty {
+                    statusMessageView(service.statusMessage)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        .transition(.opacity)
+                }
+                
+                // Decision banner - removed since service.decision doesn't exist
+                
                 ScrollView {
-                    VStack(spacing: 16) {
-                        // Title
-                        HStack {
-                            Text("知道引擎 v1.5")
-                                .font(.title)
-                                .fontWeight(.bold)
-                            Spacer()
-                        }
-                        .padding(.top, 8)
-                        
-                        // Search input
-                        HStack {
-                            TextField(placeholders[currentPlaceholder], text: $question)
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .cornerRadius(10)
-                                .focused($isInputFocused)
-                                .submitLabel(.search)
-                                .onSubmit {
-                                    if !question.isEmpty {
-                                        askQuestion()
-                                    }
-                                }
-                            
-                            Button(action: askQuestion) {
-                                Text("提问")
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 12)
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(10)
-                            }
-                            .disabled(question.isEmpty || zhiDaoService.isStreaming)
-                        }
-                        
-                        // Status message (if any)
-                        if !zhiDaoService.statusMessage.isEmpty {
-                            HStack {
-                                Text(zhiDaoService.statusMessage)
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                
-                                if zhiDaoService.isStreaming {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                }
-                            }
-                            .padding(.horizontal, 4)
-                        }
-                        
-                        // Progress stages (if streaming)
-                        if zhiDaoService.isStreaming || zhiDaoService.isComplete {
+                    VStack(spacing: 20) {
+                        // Progress stages
+                        if service.isStreaming || !service.completedStages.isEmpty {
                             ProgressStagesView(
-                                currentStage: zhiDaoService.currentStage,
-                                completedStages: completedStages
+                                currentStage: service.currentStage,
+                                completedStages: service.completedStages
                             )
-                        }
-                        
-                        // Decision banner (can answer directly or research needed)
-                        if let canAnswer = zhiDaoService.canAnswer {
-                            HStack {
-                                Image(systemName: canAnswer ? "checkmark.circle.fill" : "magnifyingglass")
-                                    .foregroundColor(canAnswer ? .green : .blue)
-                                Text(canAnswer ? "这个问题可以直接从我的知识中回答" : "需要研究：正在搜索外部来源获取信息")
-                                    .font(.subheadline)
-                                    .foregroundColor(canAnswer ? .green : .blue)
-                                Spacer()
-                            }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(canAnswer ? Color.green.opacity(0.1) : Color.blue.opacity(0.1))
-                            )
-                            
-                            // Show search term if available
-                            if let searchTerm = zhiDaoService.searchTerm {
-                                HStack {
-                                    Text("搜索关键词：")
-                                        .font(.subheadline)
-                                    Text(searchTerm)
-                                        .font(.subheadline.bold())
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 2)
-                                        .background(Color.blue.opacity(0.1))
-                                        .cornerRadius(4)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 4)
-                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                            .padding(.bottom, 8)
+                            .transition(.opacity)
                         }
                         
                         // Papers list
-                        if !zhiDaoService.papers.isEmpty {
+                        if !service.papers.isEmpty || service.isStreaming {
                             PapersListView(
-                                papers: zhiDaoService.papers,
+                                papers: service.papers,
                                 onPaperTap: { paper in
-                                    showingPaperDetail = paper
+                                    // Handle paper tap
                                 }
                             )
+                            .padding(.horizontal, 16)
+                            .transition(.opacity)
                         }
                         
-                        // Markdown answer content (when tokens are being received)
-                        if !zhiDaoService.accumulatedTokens.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text("回答")
-                                        .font(.headline)
-                                    
-                                    if zhiDaoService.isStreaming && zhiDaoService.currentStage == .answerGeneration {
-                                        // Show a typing indicator when streaming the answer
-                                        TypingIndicator()
-                                            .frame(width: 40, height: 20)
-                                    }
-                                    
-                                    Spacer()
-                                }
-                                .padding(.horizontal)
-                                
-                                MarkdownView_Native(markdown: zhiDaoService.accumulatedTokens)
-                                    .frame(minHeight: 200)
-                                    .padding(.horizontal, 4)
-                                    .background(Color(.systemBackground))
-                                    .cornerRadius(10)
-                            }
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(10)
-                            .animation(.easeInOut(duration: 0.2), value: zhiDaoService.accumulatedTokens.count)
-                            // The ID is critical for forcing refresh with each token update
-                            .id("answerContent-\(zhiDaoService.accumulatedTokens.count)")
+                        // Answer section
+                        if !service.accumulatedTokens.isEmpty || service.isStreaming {
+                            answerView
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                                .transition(.opacity)
                         }
-                        
-                        // Bottom spacer for scrolling
-                        Color.clear
-                            .frame(height: 1)
-                            .id("bottomSpace")
                     }
-                    .padding(.horizontal)
                     .padding(.bottom, 16)
                 }
-                .onChange(of: scrollToEnd) { _, scrollNow in
-                    if scrollNow {
-                        withAnimation {
-                            scrollViewProxy.scrollTo("bottomSpace", anchor: .bottom)
-                        }
-                        scrollToEnd = false
-                    }
-                }
-                .onChange(of: zhiDaoService.accumulatedTokens) { _, newTokens in
-                    // Only trigger a scroll if the number of tokens has changed significantly
-                    // This makes the streaming look more natural
-                    let newCount = newTokens.count
-                    if newCount - lastTokensCount > 10 || newTokens.contains("\n") {
-                        lastTokensCount = newCount
-                        if !isKeyboardVisible {
-                            scrollToEnd = true
-                        }
-                    }
-                }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
-                            // Reset everything
-                            zhiDaoService.reset()
-                            question = ""
-                        }) {
-                            Image(systemName: "arrow.clockwise")
-                                .foregroundColor(.blue)
-                        }
-                    }
-                }
-            }
-            .onTapGesture {
-                // Dismiss keyboard
-                isInputFocused = false
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                isKeyboardVisible = true
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                isKeyboardVisible = false
-            }
-            .onAppear {
-                // Cycle placeholder every 3 seconds
-                Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-                    withAnimation {
-                        currentPlaceholder = (currentPlaceholder + 1) % placeholders.count
-                    }
-                }
-            }
-            .sheet(item: $showingPaperDetail) { paper in
-                // Improved paper URL handling and added presentationDetents
-                SafariView(url: URL(string: paper.link) ?? URL(string: "https://example.com")!)
-                    .edgesIgnoringSafeArea(.all)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
+                .scrollDismissesKeyboard(.immediately)
+                .animation(.easeInOut(duration: 0.3), value: service.isStreaming)
+                .animation(.easeInOut(duration: 0.3), value: service.papers.count)
+                .animation(.easeInOut(duration: 0.3), value: service.accumulatedTokens)
             }
         }
-    }
-    
-    private func askQuestion() {
-        // Dismiss keyboard
-        isInputFocused = false
-        
-        // Start streaming
-        zhiDaoService.streamQuestion(query: question)
-    }
-}
-
-// Safari view for displaying papers
-// Typing indicator animation to show streaming is in progress
-struct TypingIndicator: View {
-    @State private var showFirstDot = false
-    @State private var showSecondDot = false
-    @State private var showThirdDot = false
-    
-    var body: some View {
-        HStack(spacing: 2) {
-            Circle()
-                .frame(width: 6, height: 6)
-                .opacity(showFirstDot ? 1 : 0.3)
-            Circle()
-                .frame(width: 6, height: 6)
-                .opacity(showSecondDot ? 1 : 0.3)
-            Circle()
-                .frame(width: 6, height: 6)
-                .opacity(showThirdDot ? 1 : 0.3)
-        }
-        .foregroundColor(.blue)
+        .preferredColorScheme(isDarkMode ? .dark : .light)
         .onAppear {
-            let animation = Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: true)
-            withAnimation(animation) {
-                self.showFirstDot = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                withAnimation(animation) {
-                    self.showSecondDot = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation {
+                    showSearchTips = true
                 }
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                withAnimation(animation) {
-                    self.showThirdDot = true
+        }
+        .onChange(of: service.isStreaming) { _, isStreaming in
+            if !isStreaming {
+                // When streaming completes, update UI
+                withAnimation {
+                    isTyping = false
                 }
             }
         }
     }
-}
-
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
     
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        // Add configuration options to improve stability
-        let config = SFSafariViewController.Configuration()
-        config.entersReaderIfAvailable = false
-        config.barCollapsingEnabled = true
+    // MARK: - Background Gradient
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(
+                colors: isDarkMode ? 
+                    [Color(hex: "1A1A1A"), Color(hex: "2A2A2A")] : 
+                    [Color(hex: "F5F7FA"), Color(hex: "FFFFFF")]
+            ),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
+    // MARK: - App Header
+    private var appHeader: some View {
+        HStack {
+            // App logo and name
+            HStack(spacing: 8) {
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 24))
+                    .foregroundColor(Color(hex: "3B82F6"))
+                
+                Text("知道")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(isDarkMode ? .white : .black)
+                
+                Text("AI")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(Color(hex: "3B82F6"))
+            }
+            
+            Spacer()
+            
+            // Version number
+            Text("v1.0")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F0F0F0"))
+                )
+            
+            // Theme toggle
+            Button(action: {
+                withAnimation {
+                    isDarkMode.toggle()
+                }
+            }) {
+                Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(isDarkMode ? .yellow : .purple)
+                    .padding(8)
+                    .background(
+                        Circle()
+                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F0F0F0"))
+                    )
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            isDarkMode ? Color(hex: "1A1A1A") : Color(hex: "FFFFFF")
+        )
+    }
+    
+    // MARK: - Search Bar
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            // Search icon
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 18))
+                .foregroundColor(Color(hex: "3B82F6"))
+            
+            // Text field with animated placeholder
+            ZStack(alignment: .leading) {
+                if query.isEmpty && showPlaceholder {
+                    Text(placeholderText)
+                        .foregroundColor(.gray.opacity(0.8))
+                        .padding(.leading, 2)
+                        .allowsHitTesting(false)
+                }
+                
+                TextField("", text: $query, onEditingChanged: { editing in
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isSearchFocused = editing
+                        showSearchTips = editing
+                        showPlaceholder = !editing
+                    }
+                })
+                .foregroundColor(isDarkMode ? .white : .black)
+                .disableAutocorrection(true)
+                .onSubmit {
+                    submitQuery()
+                }
+            }
+            
+            // Clear button
+            if !query.isEmpty {
+                Button(action: {
+                    query = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.gray)
+                }
+                .transition(.opacity)
+            }
+            
+            // Submit button
+            Button(action: submitQuery) {
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(Color(hex: "3B82F6"))
+            }
+            .disabled(query.isEmpty || service.isStreaming)
+            .opacity(query.isEmpty || service.isStreaming ? 0.5 : 1.0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isSearchFocused ? Color(hex: "3B82F6").opacity(0.5) : Color.clear,
+                    lineWidth: 2
+                )
+        )
+    }
+    
+    // MARK: - Search Tips View
+    private var searchTipsView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("搜索提示")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(isDarkMode ? .white : .black)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                searchTipRow(icon: "text.magnifyingglass", text: "输入具体的研究问题以获得更准确的结果")
+                searchTipRow(icon: "quote.bubble", text: "可以使用引号来搜索精确短语，例如 \"量子计算\"")
+                searchTipRow(icon: "calendar", text: "添加年份可以限制结果范围，例如 \"机器学习 2023\"")
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+        )
+    }
+    
+    private func searchTipRow(icon: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundColor(Color(hex: "3B82F6"))
+                .frame(width: 20)
+            
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundColor(isDarkMode ? .white.opacity(0.9) : .black.opacity(0.8))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+    
+    // MARK: - Status Message View
+    private func statusMessageView(_ status: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 16))
+                .foregroundColor(Color(hex: "3B82F6"))
+            
+            Text(status)
+                .font(.system(size: 14))
+                .foregroundColor(isDarkMode ? .white.opacity(0.9) : .black.opacity(0.8))
+            
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+        )
+    }
+    
+    // MARK: - Decision Banner View
+    private func decisionBannerView(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lightbulb.fill")
+                .font(.system(size: 18))
+                .foregroundColor(.yellow)
+            
+            Text(message)
+                .font(.system(size: 14))
+                .foregroundColor(isDarkMode ? .white : .black)
+                .multilineTextAlignment(.leading)
+            
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(
+                    isDirectAnswer ? 
+                        (isDarkMode ? Color.green.opacity(0.15) : Color.green.opacity(0.1)) : 
+                        (isDarkMode ? Color(hex: "3B82F6").opacity(0.15) : Color(hex: "3B82F6").opacity(0.1))
+                )
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+        )
+    }
+    
+    // MARK: - Answer View
+    private var answerView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Answer header
+            HStack(spacing: 12) {
+                Image(systemName: "text.bubble.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color(hex: "3B82F6"))
+                
+                Text("回答")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(isDarkMode ? .white : .black)
+                
+                Spacer()
+                
+                // Copy button
+                Button(action: {
+                    UIPasteboard.general.string = service.accumulatedTokens
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 14))
+                        
+                        Text("复制")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F0F0F0"))
+                    )
+                    .foregroundColor(isDarkMode ? .white : .black)
+                }
+                .opacity(service.accumulatedTokens.isEmpty ? 0 : 1)
+                .disabled(service.accumulatedTokens.isEmpty)
+            }
+            
+            // Answer content
+            VStack(alignment: .leading, spacing: 0) {
+                // Markdown content
+                MarkdownView_Native(markdown: service.accumulatedTokens)
+                    .padding(16)
+                
+                // Typing indicator
+                if isTyping {
+                    HStack {
+                        Spacer()
+                        FloatingTypingIndicator(isVisible: $isTyping)
+                        Spacer()
+                    }
+                    .padding(.bottom, 8)
+                    .transition(.opacity)
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                    .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+            )
+        }
+    }
+    
+    // MARK: - Actions
+    private func submitQuery() {
+        guard !query.isEmpty && !service.isStreaming else { return }
         
-        let safariViewController = SFSafariViewController(url: url, configuration: config)
-        safariViewController.preferredControlTintColor = UIColor.systemBlue
-        safariViewController.dismissButtonStyle = .close
-        return safariViewController
-    }
-    
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {
-        // No update needed
+        withAnimation {
+            showSearchTips = false
+            isSearchFocused = false
+        }
+        
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        service.streamQuestion(query: query)
     }
 }
 
-#Preview {
-    ContentView()
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }

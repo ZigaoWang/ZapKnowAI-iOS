@@ -10,6 +10,7 @@ class ZhiDaoService: ObservableObject {
     @Published var statusMessage = ""
     @Published var isConnected = false
     @Published var currentStage: ProgressStage?
+    @Published var completedStages: Set<ProgressStage> = []
     @Published var papers: [Paper] = []
     @Published var selectedPapers: [Paper] = []
     @Published var accumulatedTokens = ""
@@ -154,6 +155,13 @@ class ZhiDaoService: ObservableObject {
             guard let stageName = event.stage else { return }
             print("Stage update: \(stageName)")
             if let stage = ProgressStage(rawValue: stageName) {
+                // If we're moving to a new stage, mark the previous stage as completed
+                if let currentStage = self.currentStage, currentStage != stage {
+                    DispatchQueue.main.async {
+                        self.completedStages.insert(currentStage)
+                    }
+                }
+                
                 // Immediately update the current stage to show progress
                 DispatchQueue.main.async {
                     self.currentStage = stage
@@ -168,10 +176,29 @@ class ZhiDaoService: ObservableObject {
             
             if substage == "evaluation_complete" {
                 canAnswer = event.canAnswer
+                // Mark evaluation stage as completed
+                if let stage = ProgressStage(rawValue: "evaluation") {
+                    DispatchQueue.main.async {
+                        self.completedStages.insert(stage)
+                    }
+                }
             } else if substage == "search_term_selected" {
                 searchTerm = event.queryWord
             } else if substage == "papers_selected", let selected = event.selectedPapers {
                 updateSelectedPapers(selected)
+                // Mark paper retrieval stage as completed
+                if let stage = ProgressStage(rawValue: "paper_retrieval") {
+                    DispatchQueue.main.async {
+                        self.completedStages.insert(stage)
+                    }
+                }
+            } else if substage == "paper_analysis_complete" {
+                // Mark paper analysis stage as completed
+                if let stage = ProgressStage(rawValue: "paper_analysis") {
+                    DispatchQueue.main.async {
+                        self.completedStages.insert(stage)
+                    }
+                }
             }
             
         case "papers_finding":
@@ -284,6 +311,7 @@ class ZhiDaoService: ObservableObject {
         // Reset all state
         isConnected = false
         currentStage = nil
+        completedStages = []
         papers = []
         selectedPapers = []
         accumulatedTokens = ""

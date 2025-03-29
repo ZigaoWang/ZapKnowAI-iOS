@@ -1,153 +1,308 @@
 import SwiftUI
+import Foundation
 
 struct PapersListView: View {
     var papers: [Paper]
     var onPaperTap: (Paper) -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("研究论文")
-                .font(.headline)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack(spacing: 12) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color(hex: "3B82F6"))
+                
+                Text("研究论文")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(isDarkMode ? .white : .black)
+                
+                Spacer()
+                
+                Text("\(papers.count) 篇")
+                    .font(.system(size: 14, weight: .medium))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color(hex: "3B82F6").opacity(0.1))
+                    )
+                    .foregroundColor(Color(hex: "3B82F6"))
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
             
             if papers.isEmpty {
-                Text("正在查找相关论文...")
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
+                // Empty state
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                        .padding(.bottom, 8)
+                    
+                    Text("正在查找相关论文...")
+                        .font(.system(size: 16))
+                        .foregroundColor(.secondary)
+                    
+                    Text("我们正在搜索最相关的学术资源")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(papers) { paper in
-                            PaperItemView(paper: paper)
+                // Papers list
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 16) {
+                        ForEach(Array(papers.enumerated()), id: \.element.id) { index, paper in
+                            PaperItemView(paper: paper, index: index)
                                 .onTapGesture {
-                                    onPaperTap(paper)
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        onPaperTap(paper)
+                                    }
                                 }
+                                // Staggered animation for loading papers
+                                .transition(.asymmetric(
+                                    insertion: .scale(scale: 0.9).combined(with: .opacity),
+                                    removal: .opacity
+                                ))
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
         }
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.3 : 0.1), radius: 8, x: 0, y: 4)
+        )
     }
 }
 
 struct PaperItemView: View {
     var paper: Paper
+    var index: Int
     @State private var isExpanded = false
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("isDarkMode") private var isDarkMode = false
+    
+    // Animation delay based on index
+    private var animationDelay: Double {
+        return min(Double(index) * 0.1, 0.5)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
+            // Paper header
+            HStack(alignment: .top, spacing: 12) {
+                // Paper icon with status indicator
+                ZStack {
+                    Circle()
+                        .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F5F7FA"))
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                    
+                    // Status indicator
+                    if paper.isSelected || paper.isCited {
+                        Circle()
+                            .fill(paper.isSelected ? Color(hex: "3B82F6") : Color.green)
+                            .frame(width: 12, height: 12)
+                            .overlay(
+                                Circle()
+                                    .stroke(isDarkMode ? Color(hex: "2A2A2A") : .white, lineWidth: 2)
+                            )
+                            .offset(x: 14, y: -14)
+                    }
+                }
+                
                 VStack(alignment: .leading, spacing: 4) {
+                    // Paper title
                     Text(paper.title)
                         .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white : .black)
                         .lineLimit(isExpanded ? nil : 2)
                     
+                    // Paper metadata
                     HStack {
+                        // Source badge
                         SourceBadge(source: paper.source ?? "Unknown")
+                        
+                        // Year
+                        Text(paper.year)
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F0F0F0"))
+                            )
+                        
                         Spacer()
+                        
+                        // Status tag
                         StatusTag(isSelected: paper.isSelected, isCited: paper.isCited)
                     }
                 }
                 
-                Spacer()
-                
-                Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
-                    .padding(.top, 2)
+                // Expand/collapse button
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isExpanded.toggle()
+                    }
+                }) {
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F5F7FA"))
+                        )
+                }
             }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 14)
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
             .contentShape(Rectangle())
             .onTapGesture {
-                withAnimation {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     isExpanded.toggle()
                 }
             }
             
+            // Expanded content
             if isExpanded {
                 Divider()
-                    .padding(.horizontal, 14)
+                    .padding(.horizontal, 16)
                 
-                VStack(alignment: .leading, spacing: 12) {
-                    // Authors and year
-                    HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Authors
+                    HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "person.2.fill")
+                            .font(.system(size: 14))
                             .foregroundColor(.secondary)
                             .frame(width: 20)
                         
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("作者")
-                                .font(.caption)
+                                .font(.system(size: 12))
                                 .foregroundColor(.secondary)
+                            
                             Text(paper.authors)
-                                .font(.subheadline)
+                                .font(.system(size: 14))
+                                .foregroundColor(isDarkMode ? .white : .black)
                         }
                     }
                     
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.secondary)
-                            .frame(width: 20)
-                        
-                        VStack(alignment: .leading) {
-                            Text("年份")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(paper.year)
-                                .font(.subheadline)
-                        }
-                    }
-                    
+                    // Abstract
                     if let abstract = paper.abstract, !abstract.isEmpty {
-                        HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "doc.text")
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "text.alignleft")
+                                .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                                 .frame(width: 20)
                             
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text("摘要")
-                                    .font(.caption)
+                                    .font(.system(size: 12))
                                     .foregroundColor(.secondary)
+                                
                                 Text(abstract)
-                                    .font(.subheadline)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.9) : .black.opacity(0.8))
+                                    .lineLimit(6)
                             }
                         }
                     }
                     
-                    HStack(alignment: .top, spacing: 8) {
+                    // Link
+                    HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "link")
+                            .font(.system(size: 14))
                             .foregroundColor(.secondary)
                             .frame(width: 20)
                         
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text("链接")
-                                .font(.caption)
+                                .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                             
                             Link("查看论文", destination: URL(string: paper.link) ?? URL(string: "https://example.com")!)
-                                .font(.subheadline)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(hex: "3B82F6"))
+                        }
+                    }
+                    
+                    // Action buttons
+                    HStack(spacing: 12) {
+                        Spacer()
+                        
+                        // View paper button
+                        Button(action: {}) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.system(size: 14))
+                                
+                                Text("查看论文")
+                                    .font(.system(size: 14, weight: .medium))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(hex: "3B82F6"))
+                            )
+                            .foregroundColor(.white)
+                        }
+                        
+                        // Copy citation button
+                        Button(action: {
+                            let citation = "\(paper.authors) (\(paper.year)). \(paper.title)."
+                            UIPasteboard.general.string = citation
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "doc.on.doc")
+                                    .font(.system(size: 14))
+                                
+                                Text("复制引用")
+                                    .font(.system(size: 14, weight: .medium))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F0F0F0"))
+                            )
+                            .foregroundColor(isDarkMode ? .white : .black)
                         }
                     }
                 }
-                .padding(14)
+                .padding(16)
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .background(Color(.systemBackground))
-        .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isDarkMode ? Color(hex: "2A2A2A") : .white)
+                .shadow(color: Color.black.opacity(isDarkMode ? 0.2 : 0.05), radius: 4, x: 0, y: 2)
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    paper.isSelected ? Color.blue.opacity(0.5) : 
-                        (paper.isCited ? Color.green.opacity(0.5) : Color.gray.opacity(0.1)),
-                    lineWidth: paper.isSelected || paper.isCited ? 2 : 1
+                    paper.isSelected ? Color(hex: "3B82F6").opacity(0.5) : 
+                        (paper.isCited ? Color.green.opacity(0.5) : Color.clear),
+                    lineWidth: paper.isSelected || paper.isCited ? 2 : 0
                 )
         )
+        .contentShape(Rectangle())
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpanded)
     }
 }
 
@@ -167,17 +322,17 @@ struct SourceBadge: View {
     private var backgroundColorForSource: Color {
         switch source.lowercased() {
         case "arxiv":
-            return Color.red.opacity(0.8)
+            return Color(hex: "E53E3E")
         case "semantic scholar":
-            return Color.blue.opacity(0.8)
+            return Color(hex: "3182CE")
         case "pubmed":
-            return Color.green.opacity(0.8)
+            return Color(hex: "38A169")
         case "ieee xplore":
-            return Color.orange.opacity(0.8)
+            return Color(hex: "DD6B20")
         case "core":
-            return Color.purple.opacity(0.8)
+            return Color(hex: "805AD5")
         default:
-            return Color.gray.opacity(0.8)
+            return Color(hex: "718096")
         }
     }
 }
@@ -185,65 +340,62 @@ struct SourceBadge: View {
 struct StatusTag: View {
     var isSelected: Bool
     var isCited: Bool
+    @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("isDarkMode") private var isDarkMode = false
     
     var body: some View {
         if isSelected || isCited {
-            Text(isSelected ? "选中" : (isCited ? "引用" : ""))
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(isSelected ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
-                .foregroundColor(isSelected ? Color.blue : Color.green)
-                .cornerRadius(4)
+            HStack(spacing: 4) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "quote.opening")
+                    .font(.system(size: 10))
+                
+                Text(isSelected ? "选中" : (isCited ? "引用" : ""))
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(isSelected ? Color(hex: "3B82F6").opacity(0.15) : Color.green.opacity(0.15))
+            )
+            .foregroundColor(isSelected ? Color(hex: "3B82F6") : Color.green)
         } else {
-            Text("未引用")
-                .font(.system(size: 11, weight: .medium))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Color.gray.opacity(0.2))
-                .foregroundColor(Color.gray)
-                .cornerRadius(4)
+            HStack(spacing: 4) {
+                Image(systemName: "circle")
+                    .font(.system(size: 10))
+                
+                Text("未引用")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F0F0F0"))
+            )
+            .foregroundColor(.gray)
         }
     }
 }
 
 struct PapersListView_Previews: PreviewProvider {
     static var previews: some View {
-        PapersListView(
-            papers: [
-                Paper(
-                    id: "1", 
-                    title: "Advances in Artificial Intelligence and its Applications in Modern Research",
-                    authors: "John Smith, Jane Doe",
-                    year: "2023",
-                    source: "arXiv",
-                    abstract: "This paper explores recent advances in artificial intelligence and how they are being applied to address complex research problems across multiple disciplines.",
-                    link: "https://example.com/paper1",
-                    isSelected: true
-                ),
-                Paper(
-                    id: "2", 
-                    title: "Neural Networks in Healthcare: A Systematic Review",
-                    authors: "Robert Johnson, Maria Garcia",
-                    year: "2022",
-                    source: "PubMed",
-                    abstract: "A comprehensive review of how neural networks are being used in healthcare applications, from diagnosis to treatment planning.",
-                    link: "https://example.com/paper2",
-                    isCited: true
-                ),
-                Paper(
-                    id: "3", 
-                    title: "Machine Learning Approaches for Climate Prediction",
-                    authors: "David Chen, Sarah Miller",
-                    year: "2021",
-                    source: "IEEE Xplore",
-                    abstract: "This study compares various machine learning techniques for predicting climate patterns and their effectiveness in forecasting extreme weather events.",
-                    link: "https://example.com/paper3"
-                )
-            ],
-            onPaperTap: { _ in }
-        )
-        .padding()
+        VStack {
+            PapersListView(
+                papers: [
+                    Paper(id: "1", title: "Quantum Computing Applications in Cryptography", authors: "Smith, J., Johnson, A.", year: "2023", source: "arXiv", abstract: "This paper explores the applications of quantum computing in modern cryptography, focusing on the implications for security systems.", link: "https://example.com", isSelected: true),
+                    Paper(id: "2", title: "Deep Learning Approaches for Natural Language Processing", authors: "Wang, L., Chen, H.", year: "2022", source: "IEEE Xplore", abstract: "A comprehensive survey of deep learning techniques applied to natural language processing tasks.", link: "https://example.com", isCited: true)
+                ],
+                onPaperTap: { _ in }
+            )
+            .padding()
+            
+            PapersListView(
+                papers: [],
+                onPaperTap: { _ in }
+            )
+            .padding()
+        }
         .previewLayout(.sizeThatFits)
     }
 }

@@ -188,7 +188,7 @@ struct MarkdownView_Native: View {
         var result = Text("")
         
         // Combine all parts into a single Text view
-        for (text, isCitation, citationKey) in parts {
+        for (text, isCitation, _) in parts {
             // Style based on whether it's a citation or regular text
             let textPart = isCitation 
                 ? Text(text)
