@@ -395,6 +395,7 @@ struct ContentView: View {
         var currentStage: ProgressStage?
         var completedStages: [ProgressStage]
         @Environment(\.colorScheme) private var colorScheme
+        @State private var animateStages: Bool = false
         
         private var isDarkMode: Bool {
             return colorScheme == .dark
@@ -402,88 +403,176 @@ struct ContentView: View {
         
         var body: some View {
             VStack(alignment: .leading, spacing: 16) {
-                // Header
-                HStack {
+                // Header with simple animation
+                HStack(spacing: 10) {
+                    Image(systemName: "chart.bar.doc.horizontal")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                    
                     Text("研究进度")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
+                    
+                    // Progress counter
+                    HStack(spacing: 2) {
+                        let completedCount = completedStages.count
+                        let total = ProgressStage.allCases.count
+                        
+                        Text("\(completedCount)/\(total)")
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(isDarkMode ? Color(hex: "1E293B") : Color(hex: "EFF6FF"))
+                    )
                 }
+                .padding(.horizontal, 8)
+                .opacity(animateStages ? 1 : 0)
+                .animation(.easeIn(duration: 0.3), value: animateStages)
                 
-                // Progress stages
-                VStack(spacing: 0) {
-                    ForEach(ProgressStage.allCases, id: \.self) { stage in
-                        let isCompleted = completedStages.contains(stage)
-                        let isActive = currentStage == stage
-                        
-                        HStack(spacing: 16) {
-                            // Status indicator
-                            ZStack {
-                                Circle()
-                                    .fill(stageColor(stage: stage, isCompleted: isCompleted, isActive: isActive))
-                                    .frame(width: 28, height: 28)
-                                
-                                if isCompleted {
-                                    Image(systemName: "checkmark")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.white)
-                                } else if isActive {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                        .tint(.white)
-                                } else {
-                                    Text("\(stageNumber(stage))")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                // Progress timeline with simplified visualization
+                ZStack {
+                    // Card background
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), 
+                                radius: 12, x: 0, y: 4)
+                    
+                    VStack(spacing: 0) {
+                        ForEach(Array(ProgressStage.allCases.enumerated()), id: \.element) { index, stage in
+                            let isCompleted = completedStages.contains(stage)
+                            let isActive = currentStage == stage
+                            let isLast = index == ProgressStage.allCases.count - 1
+                            
+                            HStack(spacing: 16) {
+                                // Timeline visualization with connector line
+                                ZStack(alignment: .center) {
+                                    // Vertical connector line
+                                    if !isLast {
+                                        Rectangle()
+                                            .fill(connectorColor(for: stage, isCompleted: isCompleted, nextStageActive: currentStage == ProgressStage.allCases[safe: index + 1]))
+                                            .frame(width: 2)
+                                            .frame(height: 40)
+                                            .offset(y: 32)
+                                    }
+                                    
+                                    // Status indicator circle
+                                    ZStack {
+                                        // Main circle
+                                        Circle()
+                                            .fill(stageColor(stage: stage, isCompleted: isCompleted, isActive: isActive))
+                                            .frame(width: 32, height: 32)
+                                        
+                                        // Status indicators
+                                        if isCompleted {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 14, weight: .bold))
+                                                .foregroundColor(.white)
+                                        } else if isActive {
+                                            ProgressView()
+                                                .scaleEffect(0.7)
+                                                .tint(.white)
+                                        } else {
+                                            Text("\(stageNumber(stage))")
+                                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                                        }
+                                    }
                                 }
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                // Stage title
-                                Text(stage.displayText)
-                                    .font(.system(size: 15, weight: isActive || isCompleted ? .semibold : .regular, design: .rounded))
-                                    .foregroundColor(
-                                        isActive ? (isDarkMode ? Color(hex: "3B82F6") : Color(hex: "3B82F6")) :
-                                        isCompleted ? (isDarkMode ? .white : Color(hex: "111827")) :
-                                        (isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
-                                    )
+                                .frame(width: 32)
                                 
-                                // Stage description
-                                Text(stageDescription(stage))
-                                    .font(.system(size: 13, design: .rounded))
-                                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
-                                    .opacity(isActive || isCompleted ? 1.0 : 0.7)
+                                // Stage content 
+                                VStack(alignment: .leading, spacing: 6) {
+                                    // Stage title with badge for active stage
+                                    HStack(alignment: .center, spacing: 8) {
+                                        Text(stage.displayText)
+                                            .font(.system(size: 16, weight: isActive || isCompleted ? .semibold : .medium, design: .rounded))
+                                            .foregroundColor(
+                                                isActive ? Color(hex: "3B82F6") :
+                                                isCompleted ? (isDarkMode ? .white : Color(hex: "111827")) :
+                                                (isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                                            )
+                                        
+                                        if isActive {
+                                            Text("进行中")
+                                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 3)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(Color(hex: "3B82F6"))
+                                                )
+                                        }
+                                    }
+                                    
+                                    // Stage description
+                                    Text(stageDescription(stage))
+                                        .font(.system(size: 14, design: .rounded))
+                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
+                                        .opacity(isActive || isCompleted ? 1.0 : 0.7)
+                                        .lineLimit(2)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                // Status
+                                HStack(spacing: 4) {
+                                    if isCompleted {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(Color(hex: "10B981"))
+                                            .font(.system(size: 14))
+                                        
+                                        Text("已完成")
+                                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                                            .foregroundColor(Color(hex: "10B981"))
+                                    } else if isActive {
+                                        Circle()
+                                            .fill(Color(hex: "3B82F6"))
+                                            .frame(width: 8, height: 8)
+                                        
+                                        Text("进行中")
+                                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                                            .foregroundColor(Color(hex: "3B82F6"))
+                                    }
+                                }
+                                .frame(width: 70, alignment: .trailing)
                             }
-                            
-                            Spacer()
-                            
-                            // Status text
-                            Text(stageStatus(isCompleted: isCompleted, isActive: isActive))
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundColor(
-                                    isActive ? Color(hex: "3B82F6") :
-                                    isCompleted ? (isDarkMode ? Color(hex: "10B981") : Color(hex: "10B981")) :
-                                    (isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                                )
-                        }
-                        .padding(.vertical, 12)
-                        
-                        // Connector line
-                        if stage != ProgressStage.allCases.last {
-                            Rectangle()
-                                .fill(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "E5E7EB"))
-                                .frame(height: 1)
-                                .padding(.leading, 14)
+                            .padding(.vertical, 18)
+                            .padding(.horizontal, 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        isActive ? 
+                                            (isDarkMode ? Color(hex: "1E293B").opacity(0.7) : Color(hex: "EFF6FF").opacity(0.7)) :
+                                            Color.clear
+                                    )
+                            )
+                            .padding(.horizontal, 8)
                         }
                     }
+                    .padding(.vertical, 16)
                 }
-                .padding(20)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
-                )
+                .padding(8)
+                .opacity(animateStages ? 1 : 0)
+                .animation(.easeIn(duration: 0.3), value: animateStages)
+            }
+            .onAppear {
+                // Simple fade in
+                withAnimation(.easeIn(duration: 0.3)) {
+                    animateStages = true
+                }
+            }
+            .onChange(of: currentStage) { _, _ in
+                // Brief reset and fade in when stage changes
+                animateStages = false
+                withAnimation(.easeIn(duration: 0.3)) {
+                    animateStages = true
+                }
             }
         }
         
@@ -511,13 +600,16 @@ struct ContentView: View {
             }
         }
         
-        private func stageStatus(isCompleted: Bool, isActive: Bool) -> String {
+        private func connectorColor(for stage: ProgressStage, isCompleted: Bool, nextStageActive: Bool) -> Color {
             if isCompleted {
-                return "已完成"
-            } else if isActive {
-                return "进行中"
+                // Completed stage connector uses success color
+                return Color(hex: "10B981")
+            } else if nextStageActive {
+                // Active stage incoming connector uses active color
+                return Color(hex: "3B82F6")
             } else {
-                return "等待中"
+                // Inactive connector uses neutral color
+                return isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "E5E7EB")
             }
         }
         
@@ -688,5 +780,13 @@ struct RoundedCorner: Shape {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+// MARK: - Helper Extensions
+extension Array {
+    // Safe array access that prevents index out of bounds errors
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }
