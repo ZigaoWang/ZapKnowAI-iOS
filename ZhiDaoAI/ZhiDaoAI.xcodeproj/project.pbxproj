@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A24C85552D93EAEA00940494 /* Build configuration list for PBXProject "ZhidaoAI" */;
+			buildConfigurationList = A24C85552D93EAEA00940494 /* Build configuration list for PBXProject "ZhiDaoAI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -305,7 +305,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A24C85552D93EAEA00940494 /* Build configuration list for PBXProject "ZhidaoAI" */ = {
+		A24C85552D93EAEA00940494 /* Build configuration list for PBXProject "ZhiDaoAI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A24C85662D93EAEC00940494 /* Debug */,
