@@ -37,6 +37,23 @@ struct ZhiDaoEvent: Identifiable, Codable {
         id = UUID()
     }
     
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(stage, forKey: .stage)
+        try container.encodeIfPresent(message, forKey: .message)
+        try container.encodeIfPresent(canAnswer, forKey: .canAnswer)
+        try container.encodeIfPresent(queryWord, forKey: .queryWord)
+        try container.encodeIfPresent(token, forKey: .token)
+        try container.encodeIfPresent(papers, forKey: .papers)
+        try container.encodeIfPresent(count, forKey: .count)
+        try container.encodeIfPresent(selectedPapers, forKey: .selectedPapers)
+        try container.encodeIfPresent(content, forKey: .content)
+        try container.encodeIfPresent(result, forKey: .result)
+        try container.encodeIfPresent(error, forKey: .error)
+        // id is not encoded as it's a local-only property
+    }
+    
     init(status: String, message: String? = nil) {
         self.status = status
         self.message = message
@@ -107,6 +124,22 @@ struct Paper: Identifiable, Codable, Equatable {
         } else {
             link = ""
         }
+        
+        // These aren't typically in the JSON, so they default to false
+        isSelected = false
+        isCited = false
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(authors, forKey: .authors)
+        try container.encode(year, forKey: .year)
+        try container.encodeIfPresent(source, forKey: .source)
+        try container.encodeIfPresent(abstract, forKey: .abstract)
+        try container.encode(link, forKey: .link)
+        // isSelected and isCited are local-only properties, not encoded
     }
     
     enum CodingKeys: String, CodingKey {
@@ -132,6 +165,30 @@ struct QueryResult: Codable {
     let paperAnalysis: String?
     let citationMapping: [Citation]?
     let processSteps: [String]?
+    
+    enum CodingKeys: String, CodingKey {
+        case answer, queryWord, citations, paperAnalysis, citationMapping, processSteps
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        answer = try container.decode(String.self, forKey: .answer)
+        queryWord = try container.decodeIfPresent(String.self, forKey: .queryWord)
+        citations = try container.decodeIfPresent([Paper].self, forKey: .citations)
+        paperAnalysis = try container.decodeIfPresent(String.self, forKey: .paperAnalysis)
+        citationMapping = try container.decodeIfPresent([Citation].self, forKey: .citationMapping)
+        processSteps = try container.decodeIfPresent([String].self, forKey: .processSteps)
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(answer, forKey: .answer)
+        try container.encodeIfPresent(queryWord, forKey: .queryWord)
+        try container.encodeIfPresent(citations, forKey: .citations)
+        try container.encodeIfPresent(paperAnalysis, forKey: .paperAnalysis)
+        try container.encodeIfPresent(citationMapping, forKey: .citationMapping)
+        try container.encodeIfPresent(processSteps, forKey: .processSteps)
+    }
 }
 
 // Progress stage enum

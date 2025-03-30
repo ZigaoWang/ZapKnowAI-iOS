@@ -19,19 +19,18 @@ struct ContentView: View {
     @State private var showSettings = false
     
     // Animation states
-    @State private var showPlaceholder = true
     @State private var searchBarOffset: CGFloat = 0
     @State private var animateGradient = false
     
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = "输入您的研究问题..."
+    private let contentPadding: CGFloat = 16
     
     var body: some View {
         ZStack {
-            // Background gradient
+            // Background gradient - simplified and more subtle
             backgroundGradient
                 .ignoresSafeArea()
-                .animation(.easeInOut(duration: 3).repeatForever(autoreverses: true), value: animateGradient)
             
             VStack(spacing: 0) {
                 // App header
@@ -39,32 +38,29 @@ struct ContentView: View {
                 
                 // Search bar
                 searchBar
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, contentPadding)
                     .padding(.bottom, 16)
                 
                 // Status message
                 if !service.statusMessage.isEmpty {
                     statusMessageView(service.statusMessage)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.9).combined(with: .opacity),
-                            removal: .opacity
-                        ))
+                        .padding(.horizontal, contentPadding)
+                        .padding(.bottom, 12)
+                        .transition(.opacity)
                 }
                 
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 16) {
                         // Progress stages
                         if service.isStreaming || !service.completedStages.isEmpty {
                             ProgressStagesView(
                                 currentStage: service.currentStage,
                                 completedStages: Array(service.completedStages)
                             )
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                            .padding(.bottom, 8)
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .padding(.horizontal, contentPadding)
+                            .padding(.top, 4)
+                            .padding(.bottom, 4)
+                            .transition(.opacity)
                         }
                         
                         // Papers list - only show when in paper retrieval or analysis stage
@@ -76,30 +72,24 @@ struct ContentView: View {
                                     // Handle paper tap
                                 }
                             )
-                            .padding(.horizontal, 20)
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .bottom).combined(with: .opacity),
-                                removal: .opacity
-                            ))
+                            .padding(.horizontal, contentPadding)
+                            .transition(.opacity)
                         }
                         
                         // Answer section
                         if !service.accumulatedTokens.isEmpty || isGeneratingResponse {
                             answerView
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 16)
-                                .transition(.asymmetric(
-                                    insertion: .scale(scale: 0.95).combined(with: .opacity),
-                                    removal: .opacity
-                                ))
+                                .padding(.horizontal, contentPadding)
+                                .padding(.bottom, 12)
+                                .transition(.opacity)
                         }
                     }
                     .padding(.bottom, 16)
                 }
                 .scrollDismissesKeyboard(.immediately)
-                .animation(.easeInOut(duration: 0.3), value: service.isStreaming)
-                .animation(.easeInOut(duration: 0.3), value: service.papers.count)
-                .animation(.easeInOut(duration: 0.3), value: service.accumulatedTokens)
+                .animation(.easeInOut(duration: 0.2), value: service.isStreaming)
+                .animation(.easeInOut(duration: 0.2), value: service.papers.count)
+                .animation(.easeInOut(duration: 0.2), value: service.accumulatedTokens)
             }
             
             // Settings panel
@@ -144,22 +134,21 @@ struct ContentView: View {
         LinearGradient(
             gradient: Gradient(
                 colors: isDarkMode ? 
-                    [Color(hex: "121212"), Color(hex: "1E1E1E")] :
-                    [Color(hex: "F0F4FF"), Color(hex: "E6F0FF")]
+                    [Color(hex: "121212"), Color(hex: "1C1C1E")] :
+                    [Color(hex: "F8FAFF"), Color(hex: "F0F4FF")]
             ),
-            startPoint: animateGradient ? .topLeading : .bottomTrailing,
-            endPoint: animateGradient ? .bottomTrailing : .topLeading
+            startPoint: .top,
+            endPoint: .bottom
         )
     }
     
     // MARK: - App Header
     private var appHeader: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("知道 AI")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.clear, radius: 2, x: 0, y: 1)
                 
                 Text("AI 研究助手")
                     .font(.system(size: 14, weight: .medium, design: .rounded))
@@ -170,14 +159,14 @@ struct ContentView: View {
             
             // Theme toggle button
             Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                withAnimation(.easeInOut(duration: 0.2)) {
                     isDarkMode.toggle()
                 }
             }) {
                 Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(isDarkMode ? .yellow : Color(hex: "6B7280"))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(
                         Circle()
                             .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
@@ -187,14 +176,14 @@ struct ContentView: View {
             
             // Settings button
             Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                withAnimation(.easeInOut(duration: 0.2)) {
                     showSettings.toggle()
                 }
             }) {
                 Image(systemName: "info.circle")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(
                         Circle()
                             .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
@@ -202,8 +191,8 @@ struct ContentView: View {
             }
             .buttonStyle(ScaleButtonStyle())
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
+        .padding(.horizontal, contentPadding)
+        .padding(.top, 16)
         .padding(.bottom, 8)
     }
     
@@ -211,18 +200,16 @@ struct ContentView: View {
     private var searchBar: some View {
         ZStack(alignment: .leading) {
             // Background
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 16)
                 .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
             
-            HStack(spacing: 14) {
-                // Search icon with animation
+            HStack(spacing: 12) {
+                // Search icon
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 16))
                     .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                    .padding(.leading, 20)
-                    .scaleEffect(isSearchFocused ? 1.1 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSearchFocused)
+                    .padding(.leading, 16)
                 
                 // Text field
                 ZStack(alignment: .leading) {
@@ -231,7 +218,6 @@ struct ContentView: View {
                         Text(placeholderText)
                             .font(.system(size: 16, design: .rounded))
                             .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                            .padding(.leading, 2)
                     }
                     
                     TextField("", text: $query)
@@ -244,74 +230,81 @@ struct ContentView: View {
                                 showClearButton = !query.isEmpty
                             }
                         }
-                        .onChange(of: query) { _, newValue in
-                            showClearButton = !newValue.isEmpty && isSearchFocused
-                        }
-                        .onSubmit {
-                            if !query.isEmpty {
-                                startSearch()
-                            }
-                        }
                 }
                 
+                Spacer()
+                
                 // Clear button
-                if showClearButton {
+                if showClearButton && !query.isEmpty {
                     Button(action: {
-                        query = ""
-                        showClearButton = false
+                        withAnimation {
+                            query = ""
+                        }
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 18))
+                            .font(.system(size: 16))
                             .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                     }
+                    .padding(.trailing, 8)
                     .transition(.opacity)
-                    .buttonStyle(ScaleButtonStyle())
                 }
                 
                 // Search button
-                if !query.isEmpty {
-                    Button(action: {
-                        startSearch()
-                    }) {
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(Color(hex: "3B82F6"))
-                            .padding(.trailing, 16)
+                Button(action: {
+                    if !query.isEmpty {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        service.streamQuestion(query: query)
+                        
+                        withAnimation {
+                            isSearchFocused = false
+                            isTyping = true
+                        }
                     }
-                    .transition(.scale.combined(with: .opacity))
-                    .buttonStyle(ScaleButtonStyle())
+                }) {
+                    Circle()
+                        .fill(Color(hex: "3B82F6"))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                        )
                 }
+                .disabled(query.isEmpty)
+                .padding(.trailing, 8)
             }
-            .padding(.vertical, 4)
+            .frame(height: searchBarHeight)
         }
-        .frame(height: 56)
+        .frame(height: searchBarHeight)
+        .padding(.vertical, 8)
     }
     
     // MARK: - Status Message View
-    private func statusMessageView(_ status: String) -> some View {
-        HStack(spacing: 14) {
+    private func statusMessageView(_ message: String) -> some View {
+        HStack(spacing: 12) {
             if isTyping {
-                // Animated loading indicator
-                LoadingDotsView()
-                    .frame(width: 40, height: 10)
+                // Typing indicator
+                TypingIndicator()
+                    .frame(width: 40, height: 20)
             } else {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 18))
-                    .foregroundColor(Color(hex: "3B82F6"))
+                Image(systemName: "ellipsis.bubble")
+                    .font(.system(size: 16))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
             }
             
-            Text(status)
+            Text(message)
                 .font(.system(size: 15, design: .rounded))
-                .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
-                .lineLimit(2)
+                .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+                .lineLimit(1)
             
             Spacer()
         }
-        .padding(20)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 16)
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
         )
     }
     
@@ -332,8 +325,8 @@ struct ContentView: View {
                 
                 // Show generating status when generating answer
                 if isGeneratingResponse && service.accumulatedTokens.isEmpty {
-                    LoadingDotsView()
-                        .frame(width: 40, height: 10)
+                    TypingIndicator()
+                        .frame(width: 40, height: 20)
                 }
                 
                 // Copy button
@@ -375,8 +368,8 @@ struct ContentView: View {
                 // Typing indicator - only show when actively generating the answer
                 if isTyping && isGeneratingResponse {
                     HStack {
-                        LoadingDotsView()
-                            .frame(width: 40, height: 10)
+                        TypingIndicator()
+                            .frame(width: 40, height: 20)
                             .padding(.vertical, 8)
                         Spacer()
                     }
@@ -395,53 +388,37 @@ struct ContentView: View {
         var currentStage: ProgressStage?
         var completedStages: [ProgressStage]
         @Environment(\.colorScheme) private var colorScheme
-        @State private var animateStages: Bool = false
         
         private var isDarkMode: Bool {
-            return colorScheme == .dark
+            colorScheme == .dark
         }
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 16) {
-                // Header with simple animation
+            VStack(alignment: .leading, spacing: 12) {
+                // Header with progress indicator
                 HStack(spacing: 10) {
                     Image(systemName: "chart.bar.doc.horizontal")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(Color(hex: "3B82F6"))
+                        .font(.system(size: 16))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
                     
                     Text("研究进度")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
-                    // Progress counter
-                    HStack(spacing: 2) {
-                        let completedCount = completedStages.count
-                        let total = ProgressStage.allCases.count
-                        
-                        Text("\(completedCount)/\(total)")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(Color(hex: "3B82F6"))
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(isDarkMode ? Color(hex: "1E293B") : Color(hex: "EFF6FF"))
-                    )
+                    // Current progress
+                    Text("\(completedStages.count + (currentStage != nil ? 1 : 0))/\(ProgressStage.allCases.count)")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
                 }
-                .padding(.horizontal, 8)
-                .opacity(animateStages ? 1 : 0)
-                .animation(.easeIn(duration: 0.3), value: animateStages)
+                .padding(.horizontal, 4)
                 
-                // Progress timeline with simplified visualization
                 ZStack {
                     // Card background
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), 
-                                radius: 12, x: 0, y: 4)
+                        .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
                     
                     VStack(spacing: 0) {
                         ForEach(Array(ProgressStage.allCases.enumerated()), id: \.element) { index, stage in
@@ -449,129 +426,90 @@ struct ContentView: View {
                             let isActive = currentStage == stage
                             let isLast = index == ProgressStage.allCases.count - 1
                             
-                            HStack(spacing: 16) {
+                            HStack(spacing: 12) {
                                 // Timeline visualization with connector line
                                 ZStack(alignment: .center) {
                                     // Vertical connector line
                                     if !isLast {
                                         Rectangle()
-                                            .fill(connectorColor(for: stage, isCompleted: isCompleted, nextStageActive: currentStage == ProgressStage.allCases[safe: index + 1]))
+                                            .fill(isCompleted ? Color(hex: "10B981") : Color(hex: "D1D5DB"))
                                             .frame(width: 2)
-                                            .frame(height: 40)
-                                            .offset(y: 32)
+                                            .offset(y: 10)
                                     }
                                     
-                                    // Status indicator circle
+                                    // Stage number indicator
                                     ZStack {
-                                        // Main circle
                                         Circle()
-                                            .fill(stageColor(stage: stage, isCompleted: isCompleted, isActive: isActive))
-                                            .frame(width: 32, height: 32)
+                                            .fill(isCompleted ? Color(hex: "10B981") : 
+                                                  isActive ? Color(hex: "3B82F6") : 
+                                                  Color(hex: "D1D5DB"))
+                                            .frame(width: 24, height: 24)
                                         
-                                        // Status indicators
                                         if isCompleted {
                                             Image(systemName: "checkmark")
-                                                .font(.system(size: 14, weight: .bold))
+                                                .font(.system(size: 10, weight: .bold))
                                                 .foregroundColor(.white)
-                                        } else if isActive {
-                                            ProgressView()
-                                                .scaleEffect(0.7)
-                                                .tint(.white)
                                         } else {
                                             Text("\(stageNumber(stage))")
-                                                .font(.system(size: 14, weight: .medium, design: .rounded))
-                                                .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
-                                        }
-                                    }
-                                }
-                                .frame(width: 32)
-                                
-                                // Stage content 
-                                VStack(alignment: .leading, spacing: 6) {
-                                    // Stage title with badge for active stage
-                                    HStack(alignment: .center, spacing: 8) {
-                                        Text(stage.displayText)
-                                            .font(.system(size: 16, weight: isActive || isCompleted ? .semibold : .medium, design: .rounded))
-                                            .foregroundColor(
-                                                isActive ? Color(hex: "3B82F6") :
-                                                isCompleted ? (isDarkMode ? .white : Color(hex: "111827")) :
-                                                (isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
-                                            )
-                                        
-                                        if isActive {
-                                            Text("进行中")
-                                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                                .font(.system(size: 12, weight: .medium))
                                                 .foregroundColor(.white)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 3)
-                                                .background(
-                                                    Capsule()
-                                                        .fill(Color(hex: "3B82F6"))
-                                                )
                                         }
                                     }
-                                    
-                                    // Stage description
-                                    Text(stageDescription(stage))
-                                        .font(.system(size: 14, design: .rounded))
-                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
-                                        .opacity(isActive || isCompleted ? 1.0 : 0.7)
-                                        .lineLimit(2)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(width: 24)
                                 
-                                // Status
+                                // Stage information
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(stageName(stage))
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    Text(stageDescription(stage))
+                                        .font(.system(size: 12))
+                                        .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
+                                        .lineLimit(1)
+                                }
+                                
+                                Spacer()
+                                
+                                // Status indicator
                                 HStack(spacing: 4) {
                                     if isCompleted {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundColor(Color(hex: "10B981"))
-                                            .font(.system(size: 14))
+                                            .font(.system(size: 12))
                                         
                                         Text("已完成")
-                                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                                            .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(Color(hex: "10B981"))
                                     } else if isActive {
-                                        Circle()
-                                            .fill(Color(hex: "3B82F6"))
-                                            .frame(width: 8, height: 8)
-                                        
                                         Text("进行中")
-                                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                                            .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(Color(hex: "3B82F6"))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 2)
+                                            .background(
+                                                Capsule()
+                                                    .fill(Color(hex: "3B82F6").opacity(0.15))
+                                            )
                                     }
                                 }
-                                .frame(width: 70, alignment: .trailing)
                             }
-                            .padding(.vertical, 18)
-                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 16)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(
-                                        isActive ? 
-                                            (isDarkMode ? Color(hex: "1E293B").opacity(0.7) : Color(hex: "EFF6FF").opacity(0.7)) :
-                                            Color.clear
-                                    )
+                                RoundedRectangle(cornerRadius: 0)
+                                    .fill(Color.clear)
                             )
-                            .padding(.horizontal, 8)
+                            
+                            if !isLast {
+                                Divider()
+                                    .padding(.leading, 36)
+                                    .opacity(0.5)
+                            }
                         }
                     }
-                    .padding(.vertical, 16)
-                }
-                .padding(8)
-                .opacity(animateStages ? 1 : 0)
-                .animation(.easeIn(duration: 0.3), value: animateStages)
-            }
-            .onAppear {
-                // Simple fade in
-                withAnimation(.easeIn(duration: 0.3)) {
-                    animateStages = true
-                }
-            }
-            .onChange(of: currentStage) { _, _ in
-                // Brief reset and fade in when stage changes
-                animateStages = false
-                withAnimation(.easeIn(duration: 0.3)) {
-                    animateStages = true
+                    .padding(.vertical, 4)
                 }
             }
         }
@@ -590,26 +528,16 @@ struct ContentView: View {
             }
         }
         
-        private func stageColor(stage: ProgressStage, isCompleted: Bool, isActive: Bool) -> Color {
-            if isCompleted {
-                return Color(hex: "10B981") // Green for completed
-            } else if isActive {
-                return Color(hex: "3B82F6") // Blue for active
-            } else {
-                return isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "F3F4F6") // Gray for inactive
-            }
-        }
-        
-        private func connectorColor(for stage: ProgressStage, isCompleted: Bool, nextStageActive: Bool) -> Color {
-            if isCompleted {
-                // Completed stage connector uses success color
-                return Color(hex: "10B981")
-            } else if nextStageActive {
-                // Active stage incoming connector uses active color
-                return Color(hex: "3B82F6")
-            } else {
-                // Inactive connector uses neutral color
-                return isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "E5E7EB")
+        private func stageName(_ stage: ProgressStage) -> String {
+            switch stage {
+            case .evaluation:
+                return "评估问题"
+            case .paperRetrieval:
+                return "检索论文"
+            case .paperAnalysis:
+                return "分析论文"
+            case .answerGeneration:
+                return "生成答案"
             }
         }
         
@@ -670,7 +598,7 @@ struct ContentView: View {
             .background(
                 isDarkMode ? Color(hex: "1A1A1A") : Color.white
             )
-            .cornerRadius(20, corners: [.topLeft, .bottomLeft])
+            .cornerRadius(20)
             .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 0)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             
@@ -734,46 +662,49 @@ struct ScaleButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Loading Dots View
-struct LoadingDotsView: View {
-    @State private var isAnimating = false
+// MARK: - Typing Indicator
+struct TypingIndicator: View {
+    @State private var firstDotOpacity: Double = 0.4
+    @State private var secondDotOpacity: Double = 0.4
+    @State private var thirdDotOpacity: Double = 0.4
     
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(0..<3) { index in
-                Circle()
-                    .fill(Color(hex: "3B82F6"))
-                    .frame(width: 6, height: 6)
-                    .scaleEffect(isAnimating ? 1 : 0.5)
-                    .opacity(isAnimating ? 1 : 0.5)
-                    .animation(
-                        Animation.easeInOut(duration: 0.6)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(index) * 0.2),
-                        value: isAnimating
-                    )
+            Circle()
+                .frame(width: 6, height: 6)
+                .opacity(firstDotOpacity)
+            Circle()
+                .frame(width: 6, height: 6)
+                .opacity(secondDotOpacity)
+            Circle()
+                .frame(width: 6, height: 6)
+                .opacity(thirdDotOpacity)
+        }
+        .foregroundColor(Color(hex: "3B82F6"))
+        .onAppear {
+            animateDots()
+        }
+    }
+    
+    private func animateDots() {
+        let duration = 0.4
+        let baseDelay = 0.2
+        
+        withAnimation(Animation.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+            firstDotOpacity = 1.0
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + baseDelay) {
+            withAnimation(Animation.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+                secondDotOpacity = 1.0
             }
         }
-        .onAppear {
-            isAnimating = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + baseDelay * 2) {
+            withAnimation(Animation.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+                thirdDotOpacity = 1.0
+            }
         }
-    }
-}
-
-// MARK: - RoundedCorner Extension
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-    
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }
 
