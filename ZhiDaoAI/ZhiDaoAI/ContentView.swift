@@ -310,6 +310,13 @@ struct ContentView: View {
                                     
                                     // Settings
                                     Button(action: {
+                                        let generator = UIImpactFeedbackGenerator(style: .light)
+                                        generator.impactOccurred()
+                                        
+                                        // Dismiss keyboard when opening settings
+                                        isTextFieldFocused = false
+                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                        
                                         withAnimation(.easeOut(duration: 0.25)) {
                                             showSettings = true
                                             showSidebar = false
@@ -374,9 +381,11 @@ struct ContentView: View {
         .animation(.easeOut(duration: 0.25), value: showSidebar)
         .animation(.easeOut(duration: 0.25), value: showSettings)
         .onAppear {
-            // Auto focus the text field when the app opens
+            // Auto focus the text field when the app opens but only on the main screen
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.isTextFieldFocused = true
+                if !showSettings && !showSidebar && selectedConversationId == nil {
+                    self.isTextFieldFocused = true
+                }
             }
         }
         .onChange(of: service.isStreaming) { _, isStreaming in
@@ -590,6 +599,10 @@ struct ContentView: View {
             Button {
                 let generator = UIImpactFeedbackGenerator(style: .light)
                 generator.impactOccurred()
+                
+                // Dismiss keyboard when opening settings
+                isTextFieldFocused = false
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 
                 withAnimation(.easeOut(duration: 0.25)) {
                     showSettings.toggle()
