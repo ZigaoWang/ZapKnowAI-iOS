@@ -20,6 +20,9 @@ struct ContentView: View {
     @State private var imageUrls: [String] = []
     @State private var articles: [Article] = []
     
+    // Focus state for the text field
+    @FocusState private var isTextFieldFocused: Bool
+    
     // Sidebar and conversation states
     @State private var showSidebar = false
     @State private var selectedConversationId: UUID? = nil
@@ -366,6 +369,12 @@ struct ContentView: View {
         .preferredColorScheme(isDarkMode ? .dark : .light)
         .animation(.easeOut(duration: 0.25), value: showSidebar)
         .animation(.easeOut(duration: 0.25), value: showSettings)
+        .onAppear {
+            // Auto focus the text field when the app opens
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.isTextFieldFocused = true
+            }
+        }
         .onChange(of: service.isStreaming) { _, isStreaming in
             if !isStreaming && !service.accumulatedTokens.isEmpty {
                 // When streaming completes, update UI and save conversation
@@ -601,14 +610,14 @@ struct ContentView: View {
         )
     }
     
-    // Update query input bar to match the new design with equal height button
+    // Update query input bar to use the focus state
     private var queryInputBar: some View {
         VStack(spacing: 0) {
             Divider()
                 .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
             
             HStack(alignment: .center, spacing: 10) {
-                // Text field with improved styling
+                // Text field with improved styling and focus
                 TextField(placeholderText, text: $query)
                     .font(.system(size: 16, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
@@ -619,6 +628,7 @@ struct ContentView: View {
                             .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
                             .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
                     )
+                    .focused($isTextFieldFocused)
                     .onTapGesture {
                         isSearchFocused = true
                     }
@@ -912,6 +922,8 @@ struct ContentView: View {
     private func submitQuery() {
         guard !query.isEmpty else { return }
         
+        // Hide keyboard when submitting
+        isTextFieldFocused = false
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
         service.streamQuestion(query: query)
         performImageSearch()
