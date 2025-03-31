@@ -10,6 +10,7 @@ struct ZhiDaoEvent: Identifiable, Codable {
     var queryWord: String?
     var token: String?
     var papers: [Paper]?
+    var images: [ImageResult]?
     var count: Int?
     var selectedPapers: [Paper]?
     var content: String?
@@ -17,7 +18,7 @@ struct ZhiDaoEvent: Identifiable, Codable {
     var error: String?
     
     enum CodingKeys: String, CodingKey {
-        case status, stage, message, canAnswer, queryWord, token, papers, count, selectedPapers, content, result, error
+        case status, stage, message, canAnswer, queryWord, token, papers, images, count, selectedPapers, content, result, error
     }
     
     init(from decoder: Decoder) throws {
@@ -29,6 +30,7 @@ struct ZhiDaoEvent: Identifiable, Codable {
         queryWord = try container.decodeIfPresent(String.self, forKey: .queryWord)
         token = try container.decodeIfPresent(String.self, forKey: .token)
         papers = try container.decodeIfPresent([Paper].self, forKey: .papers)
+        images = try container.decodeIfPresent([ImageResult].self, forKey: .images)
         count = try container.decodeIfPresent(Int.self, forKey: .count)
         selectedPapers = try container.decodeIfPresent([Paper].self, forKey: .selectedPapers)
         content = try container.decodeIfPresent(String.self, forKey: .content)
@@ -46,6 +48,7 @@ struct ZhiDaoEvent: Identifiable, Codable {
         try container.encodeIfPresent(queryWord, forKey: .queryWord)
         try container.encodeIfPresent(token, forKey: .token)
         try container.encodeIfPresent(papers, forKey: .papers)
+        try container.encodeIfPresent(images, forKey: .images)
         try container.encodeIfPresent(count, forKey: .count)
         try container.encodeIfPresent(selectedPapers, forKey: .selectedPapers)
         try container.encodeIfPresent(content, forKey: .content)
@@ -165,9 +168,10 @@ struct QueryResult: Codable {
     let paperAnalysis: String?
     let citationMapping: [Citation]?
     let processSteps: [String]?
+    let images: [ImageResult]?
     
     enum CodingKeys: String, CodingKey {
-        case answer, queryWord, citations, paperAnalysis, citationMapping, processSteps
+        case answer, queryWord, citations, paperAnalysis, citationMapping, processSteps, images
     }
     
     init(from decoder: Decoder) throws {
@@ -178,6 +182,7 @@ struct QueryResult: Codable {
         paperAnalysis = try container.decodeIfPresent(String.self, forKey: .paperAnalysis)
         citationMapping = try container.decodeIfPresent([Citation].self, forKey: .citationMapping)
         processSteps = try container.decodeIfPresent([String].self, forKey: .processSteps)
+        images = try container.decodeIfPresent([ImageResult].self, forKey: .images)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -188,6 +193,7 @@ struct QueryResult: Codable {
         try container.encodeIfPresent(paperAnalysis, forKey: .paperAnalysis)
         try container.encodeIfPresent(citationMapping, forKey: .citationMapping)
         try container.encodeIfPresent(processSteps, forKey: .processSteps)
+        try container.encodeIfPresent(images, forKey: .images)
     }
 }
 
@@ -209,5 +215,50 @@ enum ProgressStage: String, CaseIterable {
         case .answerGeneration:
             return "正在生成最终答案"
         }
+    }
+}
+
+// ResearchImage model for use in ImagesGalleryView
+struct ResearchImage: Identifiable, Codable {
+    let id: String
+    let url: String
+    let caption: String
+    let source: String
+    let isGenerated: Bool
+    
+    init(id: String = UUID().uuidString, url: String, caption: String, source: String, isGenerated: Bool = false) {
+        self.id = id
+        self.url = url
+        self.caption = caption
+        self.source = source
+        self.isGenerated = isGenerated
+    }
+}
+
+// ImageResult model used in the ZhiDaoService
+struct ImageResult: Identifiable, Codable {
+    let id: String
+    let url: String
+    let caption: String
+    let source: String
+    let isGenerated: Bool
+    
+    init(id: String = UUID().uuidString, url: String, caption: String, source: String, isGenerated: Bool = false) {
+        self.id = id
+        self.url = url
+        self.caption = caption
+        self.source = source
+        self.isGenerated = isGenerated
+    }
+    
+    // Convert to ResearchImage
+    func toResearchImage() -> ResearchImage {
+        return ResearchImage(
+            id: id,
+            url: url,
+            caption: caption,
+            source: source,
+            isGenerated: isGenerated
+        )
     }
 }
