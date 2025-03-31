@@ -13,6 +13,7 @@ class ZhiDaoService: ObservableObject {
     @Published var completedStages: Set<ProgressStage> = []
     @Published var papers: [Paper] = []
     @Published var selectedPapers: [Paper] = []
+    @Published var images: [ImageResult] = []
     @Published var accumulatedTokens = ""
     @Published var citationMapping: [String: Citation] = [:]
     @Published var error: String?
@@ -20,6 +21,7 @@ class ZhiDaoService: ObservableObject {
     @Published var canAnswer: Bool?
     @Published var searchTerm: String?
     @Published var isComplete = false
+    @Published var hasImages = false
     
     private var buffer = ""
     
@@ -208,6 +210,14 @@ class ZhiDaoService: ObservableObject {
             }
             statusMessage = event.message ?? "找到 \(event.count ?? 0) 篇论文"
             
+        case "images_found":
+            if let foundImages = event.images {
+                print("Found \(foundImages.count) images")
+                updateImages(foundImages)
+                hasImages = true
+            }
+            statusMessage = event.message ?? "找到 \(event.count ?? 0) 张相关图片"
+            
         case "streaming":
             // A streaming phase is starting (e.g., paper analysis or answer generation)
             statusMessage = event.message ?? "开始流式生成回答"
@@ -246,6 +256,12 @@ class ZhiDaoService: ObservableObject {
                         }
                     }
                 }
+                
+                // Update images if available in result
+                if let resultImages = result.images, !resultImages.isEmpty {
+                    updateImages(resultImages)
+                    hasImages = true
+                }
             }
             
             statusMessage = "响应完成"
@@ -264,6 +280,15 @@ class ZhiDaoService: ObservableObject {
         for paper in newPapers {
             if !papers.contains(where: { $0.id == paper.id }) {
                 papers.append(paper)
+            }
+        }
+    }
+    
+    private func updateImages(_ newImages: [ImageResult]) {
+        // For each new image, add it if it doesn't exist
+        for image in newImages {
+            if !images.contains(where: { $0.url == image.url }) {
+                images.append(image)
             }
         }
     }
@@ -314,6 +339,7 @@ class ZhiDaoService: ObservableObject {
         completedStages = []
         papers = []
         selectedPapers = []
+        images = []
         accumulatedTokens = ""
         citationMapping = [:]
         error = nil
@@ -322,6 +348,7 @@ class ZhiDaoService: ObservableObject {
         canAnswer = nil
         searchTerm = nil
         isComplete = false
+        hasImages = false
         buffer = ""
     }
     

@@ -18,6 +18,7 @@ struct ContentView: View {
     @State private var isDarkMode = false
     @State private var showSettings = false
     @State private var imageUrls: [String] = []
+    @State private var articles: [Article] = [] // Add state variable for articles
     
     // Animation states
     @State private var searchBarOffset: CGFloat = 0
@@ -50,28 +51,53 @@ struct ContentView: View {
                         .transition(.opacity)
                 }
 
-                // Image results
-                if !imageUrls.isEmpty {
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 10) {
-                            ForEach(imageUrls, id: \ .self) { url in
-                                AsyncImage(url: URL(string: url)) { image in
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 200)
-                                        .cornerRadius(10)
-                                } placeholder: {
-                                    ProgressView()
-                                }
-                            }
-                        }
-                        .padding(.horizontal, contentPadding)
-                    }
-                }
-                
                 ScrollView {
                     VStack(spacing: 16) {
+                        // Image results
+                        if !imageUrls.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("相关图片")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    .padding(.horizontal, contentPadding)
+                                
+                                ScrollView(.horizontal) {
+                                    HStack(spacing: 10) {
+                                        ForEach(imageUrls, id: \.self) { url in
+                                            AsyncImage(url: URL(string: url)) { image in
+                                                image
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(height: 200)
+                                                    .cornerRadius(10)
+                                            } placeholder: {
+                                                ProgressView()
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, contentPadding)
+                                }
+                            }
+                            .padding(.bottom, 16)
+                        }
+                        
+                        // Articles section
+                        if !articles.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("延伸阅读")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    .padding(.horizontal, contentPadding)
+                                
+                                ForEach(articles) { article in
+                                    ArticleCardView(article: article, isDarkMode: isDarkMode)
+                                        .padding(.horizontal, contentPadding)
+                                        .padding(.bottom, 8)
+                                }
+                            }
+                            .padding(.bottom, 16)
+                        }
+                        
                         // Progress stages
                         if service.isStreaming || !service.completedStages.isEmpty {
                             ProgressStagesView(
@@ -655,6 +681,52 @@ struct ContentView: View {
         )
     }
     
+    // MARK: - Article Card View
+    struct ArticleCardView: View {
+        let article: Article
+        let isDarkMode: Bool
+        
+        var body: some View {
+            Button(action: {
+                if let url = URL(string: article.url) {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(article.title)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .lineLimit(2)
+                    
+                    Text(article.content)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+                        .lineLimit(3)
+                    
+                    HStack {
+                        Text(article.url)
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                    }
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
+                        .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+    
     // MARK: - Actions
     private func startSearch() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -676,14 +748,15 @@ struct ContentView: View {
     
     private func performImageSearch() {
         let imageSearchService = ImageSearchService()
-        imageSearchService.searchImages(query: query) { result in
+        imageSearchService.searchImagesAndArticles(query: query) { result in
             switch result {
-            case .success(let urls):
+            case .success(let response):
                 DispatchQueue.main.async {
-                    self.imageUrls = urls
+                    self.imageUrls = response.imageUrls
+                    self.articles = response.articles
                 }
             case .failure(let error):
-                print("Error fetching images: \(error)")
+                print("Error fetching search results: \(error)")
             }
         }
     }
