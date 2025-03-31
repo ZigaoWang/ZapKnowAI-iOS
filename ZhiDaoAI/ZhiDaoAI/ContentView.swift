@@ -379,20 +379,19 @@ struct ContentView: View {
         }
     }
     
-    // Enhanced welcome screen for empty state with better UI/UX
+    // Enhanced welcome screen but simpler and cooler
     private var welcomeView: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                // Hero section with animated gradient background
+            VStack(spacing: 24) {
+                // Clean, modern hero section with subtle gradient
                 ZStack {
-                    // Animated gradient background
-                    RoundedRectangle(cornerRadius: 24)
+                    // Subtle animated gradient background
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
                                 gradient: Gradient(colors: [
                                     Color(hex: "3B82F6"),
-                                    Color(hex: "6366F1"),
-                                    Color(hex: "8B5CF6")
+                                    Color(hex: "6366F1")
                                 ]),
                                 startPoint: animateGradient ? .topLeading : .bottomTrailing,
                                 endPoint: animateGradient ? .bottomTrailing : .topLeading
@@ -404,164 +403,90 @@ struct ContentView: View {
                             }
                         }
                     
-                    VStack(spacing: 24) {
-                        // App logo with glow effect
+                    VStack(spacing: 20) {
+                        // App logo with subtle glow
                         Group {
                             if let _ = UIImage(named: "AppLogo") {
                                 Image("AppLogo")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 100, height: 100)
-                                    .cornerRadius(24)
-                                    .shadow(color: Color(hex: "3B82F6").opacity(0.5), radius: 20, x: 0, y: 0)
+                                    .frame(width: 80, height: 80)
+                                    .cornerRadius(16)
+                                    .shadow(color: Color.white.opacity(0.3), radius: 10, x: 0, y: 0)
                             } else {
                                 Image(systemName: "bubble.left.and.bubble.right.fill")
-                                    .font(.system(size: 50))
+                                    .font(.system(size: 40))
                                     .foregroundColor(.white)
-                                    .frame(width: 100, height: 100)
+                                    .frame(width: 80, height: 80)
                                     .background(
-                                        ZStack {
-                                            Circle()
-                                                .fill(Color(hex: "3B82F6"))
-                                            Circle()
-                                                .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                                        }
+                                        Circle()
+                                            .fill(Color(hex: "3B82F6").opacity(0.8))
+                                            .shadow(color: Color.white.opacity(0.3), radius: 10, x: 0, y: 0)
                                     )
-                                    .shadow(color: Color(hex: "3B82F6").opacity(0.5), radius: 20, x: 0, y: 0)
                             }
                         }
-                        .padding(.top, 40)
                         
                         Text("知道 AI")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         
-                        Text("你的智能研究助手")
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
+                        Text("智能研究助手")
+                            .font(.system(size: 18, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.9))
-                            .padding(.bottom, 20)
-                        
-                        // Quick start button
-                        Button {
-                            query = "Tell me about the latest research in AI"
-                            submitQuery()
-                        } label: {
-                            HStack {
-                                Text("快速开始")
-                                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                    
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 16, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 14)
-                            .background(
-                                Capsule()
-                                    .fill(Color.white.opacity(0.25))
-                            )
-                            .overlay(
-                                Capsule()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(ScaleButtonStyle())
-                        .padding(.bottom, 40)
                     }
-                    .padding(20)
+                    .padding(.vertical, 40)
                 }
-                .frame(height: 380)
+                .frame(height: 280)
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 
-                // Example questions section
-                VStack(alignment: .leading, spacing: 20) {
+                // Example questions in a cleaner design
+                VStack(alignment: .leading, spacing: 16) {
                     Text("试试以下问题")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                         .padding(.horizontal, 20)
-                        .padding(.top, 30)
                     
-                    // Example questions with enhanced styling
                     ForEach(exampleQuestions, id: \.self) { question in
                         Button {
                             query = question
                             submitQuery()
                         } label: {
-                            HStack(spacing: 16) {
-                                // Category icon
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(hex: "3B82F6").opacity(0.1))
-                                        .frame(width: 42, height: 42)
-                                    
-                                    Image(systemName: categoryIcon(for: question))
-                                        .font(.system(size: 18))
-                                        .foregroundColor(Color(hex: "3B82F6"))
-                                }
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(Color(hex: "3B82F6").opacity(0.1))
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Image(systemName: categoryIcon(for: question))
+                                            .font(.system(size: 14))
+                                            .foregroundColor(Color(hex: "3B82F6"))
+                                    )
                                 
                                 Text(question)
-                                    .font(.system(size: 16, design: .rounded))
-                                    .multilineTextAlignment(.leading)
+                                    .font(.system(size: 15, design: .rounded))
                                     .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
-                                    .lineLimit(2)
+                                    .lineLimit(1)
                                 
                                 Spacer()
                                 
-                                Circle()
-                                    .fill(Color(hex: "3B82F6"))
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Image(systemName: "arrow.up")
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.white)
-                                    )
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "3B82F6"))
                             }
-                            .padding(16)
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 16)
                             .background(
-                                RoundedRectangle(cornerRadius: 16)
+                                RoundedRectangle(cornerRadius: 12)
                                     .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                                    .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 10, x: 0, y: 2)
+                                    .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
                             )
                             .padding(.horizontal, 20)
                         }
                         .buttonStyle(ScaleButtonStyle())
                     }
-                    
-                    // Features section
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("主要功能")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                            .padding(.top, 40)
-                        
-                        featureRow(
-                            icon: "magnifyingglass",
-                            title: "智能搜索",
-                            description: "基于最新研究论文快速获取高质量回答"
-                        )
-                        
-                        featureRow(
-                            icon: "doc.text.magnifyingglass",
-                            title: "论文分析",
-                            description: "综合分析多篇相关学术论文提供全面视角"
-                        )
-                        
-                        featureRow(
-                            icon: "chart.bar.xaxis",
-                            title: "可视化数据",
-                            description: "展示研究数据图表及相关图片资料"
-                        )
-                        
-                        featureRow(
-                            icon: "bookmark.fill",
-                            title: "保存对话",
-                            description: "保存重要对话以便日后参考和分享"
-                        )
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 80)
                 }
+                
+                Spacer(minLength: 40)
             }
         }
         .scrollDismissesKeyboard(.immediately)
@@ -676,7 +601,7 @@ struct ContentView: View {
         )
     }
     
-    // Update query input bar to match the new design
+    // Update query input bar to match the new design with equal height button
     private var queryInputBar: some View {
         VStack(spacing: 0) {
             Divider()
@@ -690,26 +615,17 @@ struct ContentView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 22)
+                        RoundedRectangle(cornerRadius: 12)
                             .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                            .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
+                            .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
                     )
                     .onTapGesture {
                         isSearchFocused = true
                     }
                 
-                // Submit button with improved styling
+                // Send/stop button with matching height
                 Button(action: submitQuery) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                service.isStreaming ? 
-                                Color.red : 
-                                Color(hex: query.isEmpty ? "D1D5DB" : "3B82F6")
-                            )
-                            .frame(width: 44, height: 44)
-                            .shadow(color: query.isEmpty ? Color.clear : Color(hex: "3B82F6").opacity(0.3), radius: 5, x: 0, y: 2)
-                        
+                    HStack {
                         if service.isStreaming {
                             Image(systemName: "stop.fill")
                                 .font(.system(size: 16, weight: .semibold))
@@ -721,10 +637,15 @@ struct ContentView: View {
                                 .opacity(query.isEmpty ? 0.5 : 1.0)
                         }
                     }
-                    .scaleEffect(service.isStreaming ? 1.05 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: service.isStreaming)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(service.isStreaming ? Color.red : Color(hex: query.isEmpty ? "D1D5DB" : "3B82F6"))
+                    )
                 }
                 .disabled(query.isEmpty && !service.isStreaming)
+                .scaleEffect(service.isStreaming ? 1.05 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: service.isStreaming)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
