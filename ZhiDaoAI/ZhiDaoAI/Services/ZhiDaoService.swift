@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 class ZhiDaoService: ObservableObject {
-    private let baseURL = "http://localhost:3000"
+    private let baseURL = "https://api1.zhidao.zigao.wang"
     private var eventSource: URLSessionDataTask?
     private var urlSession: URLSession
     

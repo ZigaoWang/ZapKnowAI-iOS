@@ -7,7 +7,7 @@ struct SearchResponse {
 }
 
 class ImageSearchService {
-    private let baseURL = "http://localhost:3001/api/search"
+    private let baseURL = "https://api2.zhidao.zigao.wang/api/search"
     
     // Keep the original function for backward compatibility
     func searchImages(query: String, completion: @escaping (Result<[String], Error>) -> Void) {
