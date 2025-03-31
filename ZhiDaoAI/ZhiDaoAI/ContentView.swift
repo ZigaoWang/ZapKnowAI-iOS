@@ -21,7 +21,7 @@ struct ContentView: View {
     @State private var articles: [Article] = []
     
     // Sidebar and conversation states
-    @State private var showSidebar = true
+    @State private var showSidebar = false
     @State private var selectedConversationId: UUID? = nil
     
     // Animation states
@@ -30,68 +30,260 @@ struct ContentView: View {
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = "Ask a question..."
     
+    // Date formatter
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
+    
     var body: some View {
         ZStack {
+            // Main background
             Color(hex: isDarkMode ? "121212" : "F9F9F9")
                 .ignoresSafeArea()
             
+            // Main content
             VStack(spacing: 0) {
                 // Top navigation area
                 topBar
                 
                 // Main content
                 ZStack {
-                    // Sidebar for conversation history
-                    HStack(spacing: 0) {
-                        // Left sidebar (conversation list)
-                        if showSidebar {
-                            ConversationListView(
-                                storageService: storageService,
-                                selectedConversationId: $selectedConversationId,
+                    VStack(spacing: 0) {
+                        if let selectedId = selectedConversationId,
+                           let conversation = storageService.savedConversations.first(where: { $0.id == selectedId }) {
+                            // Show saved conversation
+                            SavedConversationView(
+                                conversation: conversation,
                                 isDarkMode: isDarkMode,
-                                onNewChat: startNewChat
+                                onBack: {
+                                    withAnimation(.easeOut(duration: 0.25)) {
+                                        selectedConversationId = nil
+                                    }
+                                }
                             )
-                            .frame(width: 300)
-                            .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
-                            .transition(.move(edge: .leading))
+                        } else {
+                            if service.accumulatedTokens.isEmpty && imageUrls.isEmpty && articles.isEmpty && service.papers.isEmpty && !service.isStreaming {
+                                // Empty state / welcome screen
+                                welcomeView
+                            } else {
+                                // Active chat with results
+                                chatResultsView
+                            }
                         }
                         
-                        // Main chat area
-                        VStack(spacing: 0) {
-                            if let selectedId = selectedConversationId,
-                               let conversation = storageService.savedConversations.first(where: { $0.id == selectedId }) {
-                                // Show saved conversation
-                                SavedConversationView(
-                                    conversation: conversation,
-                                    isDarkMode: isDarkMode
-                                )
-                            } else {
-                                if service.accumulatedTokens.isEmpty && imageUrls.isEmpty && articles.isEmpty && service.papers.isEmpty && !service.isStreaming {
-                                    // Empty state / welcome screen
-                                    welcomeView
-                                } else {
-                                    // Active chat with results
-                                    chatResultsView
-                                }
-                            }
-                            
-                            // Input area always shown at bottom
-                            queryInputBar
-                        }
-                        .frame(maxWidth: .infinity)
-                        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
+                        // Input area always shown at bottom
+                        queryInputBar
                     }
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            // Settings panel overlay
-            if showSettings {
-                settingsPanel
-                    .transition(.move(edge: .trailing))
+            // Overlay elements with proper z-index
+            ZStack {
+                // Sidebar drawer overlay
+                if showSidebar {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                showSidebar = false
+                            }
+                        }
+                    
+                    // Drawer content with fixed animation
+                    HStack(spacing: 0) {
+                        ZStack(alignment: .topTrailing) {
+                            VStack(spacing: 0) {
+                                // Header area
+                                HStack {
+                                    Text("知道 AI")
+                                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    Spacer()
+                                }
+                                .padding(.top, 16)
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                                
+                                // New Chat button
+                                Button(action: {
+                                    onNewChat()
+                                    withAnimation(.easeOut(duration: 0.25)) {
+                                        showSidebar = false
+                                    }
+                                }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.white)
+                                        
+                                        Text("新对话")
+                                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                                            .foregroundColor(.white)
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(14)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color(hex: "3B82F6"))
+                                    )
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 16)
+                                
+                                // Search box
+                                HStack {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                                    
+                                    Text("搜索对话")
+                                        .font(.system(size: 14, design: .rounded))
+                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                                    
+                                    Spacer()
+                                }
+                                .padding(10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                )
+                                .padding(.horizontal, 16)
+                                
+                                Divider()
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, 16)
+                                
+                                Text("今天")
+                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                    .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                
+                                // Conversations list
+                                if storageService.savedConversations.isEmpty {
+                                    // Empty state
+                                    VStack(spacing: 16) {
+                                        Image(systemName: "bubble.left.and.bubble.right")
+                                            .font(.system(size: 36))
+                                            .foregroundColor(isDarkMode ? Color.white.opacity(0.3) : Color(hex: "D1D5DB"))
+                                        
+                                        Text("暂无历史对话")
+                                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                                            .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .padding(.top, 60)
+                                    .frame(maxWidth: .infinity)
+                                } else {
+                                    // List of conversations
+                                    ScrollView {
+                                        LazyVStack(spacing: 0) {
+                                            ForEach(storageService.savedConversations.sorted(by: { $0.timestamp > $1.timestamp })) { conversation in
+                                                ConversationRowItem(
+                                                    conversation: conversation,
+                                                    isSelected: selectedConversationId == conversation.id,
+                                                    dateFormatter: dateFormatter,
+                                                    isDarkMode: isDarkMode
+                                                )
+                                                .onTapGesture {
+                                                    selectedConversationId = conversation.id
+                                                    withAnimation(.easeOut(duration: 0.25)) {
+                                                        showSidebar = false
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                // User profile
+                                HStack(spacing: 12) {
+                                    // User avatar
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(hex: "6366F1"))
+                                            .frame(width: 36, height: 36)
+                                        
+                                        Text("ZW")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    // User name
+                                    Text("Zigao Wang")
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    Spacer()
+                                    
+                                    // Settings
+                                    Button(action: {
+                                        withAnimation(.easeOut(duration: 0.25)) {
+                                            showSettings = true
+                                            showSidebar = false
+                                        }
+                                    }) {
+                                        Image(systemName: "ellipsis")
+                                            .font(.system(size: 16, weight: .medium))
+                                            .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
+                                            .frame(width: 32, height: 32)
+                                            .background(
+                                                Circle()
+                                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                            )
+                                    }
+                                }
+                                .padding(16)
+                                .background(isDarkMode ? Color(hex: "1A1A1A") : Color(hex: "FFFFFF"))
+                            }
+                            
+                            // Close button
+                            Button {
+                                withAnimation(.easeOut(duration: 0.25)) {
+                                    showSidebar = false
+                                }
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    .padding(8)
+                                    .background(
+                                        Circle()
+                                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                    )
+                            }
+                            .padding(16)
+                        }
+                        .frame(width: UIScreen.main.bounds.width * 0.85)
+                        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
+                        
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(.move(edge: .leading))
+                }
+                
+                // Settings panel overlay
+                if showSettings {
+                    settingsPanel
+                        .transition(.move(edge: .trailing))
+                }
             }
         }
         .preferredColorScheme(isDarkMode ? .dark : .light)
+        .animation(.easeOut(duration: 0.25), value: showSidebar)
+        .animation(.easeOut(duration: 0.25), value: showSettings)
         .onChange(of: service.isStreaming) { _, isStreaming in
             if !isStreaming && !service.accumulatedTokens.isEmpty {
                 // When streaming completes, update UI and save conversation
@@ -284,89 +476,108 @@ struct ContentView: View {
     
     // Top navigation bar
     private var topBar: some View {
-        HStack {
+        HStack(spacing: 16) {
             // Menu button
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     showSidebar.toggle()
                 }
-            }) {
+            } label: {
                 Image(systemName: "line.3.horizontal")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .padding(8)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color(hex: isDarkMode ? "2A2A2A" : "F1F5F9").opacity(0.8))
+                    )
             }
             
             Spacer()
             
-            // App name
-            if !showSidebar {
-                Text("知道 AI")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-            }
-            
-            Spacer()
-            
-            // Theme toggle
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isDarkMode.toggle()
+            // App title (shown when no conversation is selected)
+            if selectedConversationId == nil {
+                HStack(spacing: 8) {
+                    Text("知道 AI")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
                 }
-            }) {
-                Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(isDarkMode ? .yellow : Color(hex: "6B7280"))
-                    .padding(8)
             }
+            
+            Spacer()
             
             // Settings button
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     showSettings.toggle()
                 }
-            }) {
-                Image(systemName: "ellipsis.circle")
+            } label: {
+                Image(systemName: "gear")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .padding(8)
+                    .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color(hex: isDarkMode ? "2A2A2A" : "F1F5F9").opacity(0.8))
+                    )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
-        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 2, y: 1)
+        .background(
+            Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF")
+                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 3)
+        )
     }
     
-    // Input bar at bottom of screen
+    // Input field
     private var queryInputBar: some View {
         VStack(spacing: 0) {
             Divider()
-                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
             
-            HStack(spacing: 12) {
-                // Text input field
+            HStack(alignment: .center, spacing: 10) {
+                // Text field - replace TextEditor with TextField for better behavior
                 TextField(placeholderText, text: $query)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(isDarkMode ? Color.white.opacity(0.2) : Color.black.opacity(0.2), lineWidth: 1)
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                            )
-                    )
                     .font(.system(size: 16, design: .rounded))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                    )
+                    .onTapGesture {
+                        isSearchFocused = true
+                    }
                 
-                // Send button
+                // Submit button
                 Button(action: submitQuery) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 30))
-                        .foregroundColor(query.isEmpty ? (isDarkMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3)) : Color(hex: "3B82F6"))
+                    ZStack {
+                        Circle()
+                            .fill(
+                                service.isStreaming ? 
+                                Color.red : 
+                                Color(hex: query.isEmpty ? "D1D5DB" : "3B82F6")
+                            )
+                            .frame(width: 44, height: 44)
+                            .shadow(color: query.isEmpty ? Color.clear : Color(hex: "3B82F6").opacity(0.3), radius: 5, x: 0, y: 2)
+                        
+                        if service.isStreaming {
+                            Image(systemName: "stop.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                        } else {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                                .opacity(query.isEmpty ? 0.5 : 1.0)
+                        }
+                    }
+                    .scaleEffect(service.isStreaming ? 1.05 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: service.isStreaming)
                 }
-                .disabled(query.isEmpty || service.isStreaming)
+                .disabled(query.isEmpty && !service.isStreaming)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -496,8 +707,8 @@ struct ContentView: View {
     }
     
     // Start a brand new chat, clearing everything
-    private func startNewChat() {
-        withAnimation {
+    private func onNewChat() {
+        withAnimation(.easeOut(duration: 0.25)) {
             // Clear all data
             query = ""
             service.reset()
@@ -538,6 +749,23 @@ struct ContentView: View {
         }
     }
     
+    // Reset all function
+    private func resetAll() {
+        // Clear all data
+        query = ""
+        service.reset()
+        imageUrls = []
+        articles = []
+        selectedConversationId = nil
+        
+        // Clear saved conversations
+        storageService.deleteAllConversations()
+        
+        // Add haptic feedback
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+    
     // Example questions to display on the welcome screen
     private var exampleQuestions: [String] = [
         "癌症治疗的最新研究进展是什么？",
@@ -563,7 +791,191 @@ struct ContentView: View {
     
     // MARK: - Settings Panel
     private var settingsPanel: some View {
-        SettingsPanel(isVisible: $showSettings, isDarkMode: isDarkMode)
+        ZStack(alignment: .trailing) {
+            // Dimmed background
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        showSettings = false
+                    }
+                }
+            
+            // Settings panel content
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                HStack {
+                    Text("设置")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : .black)
+                    
+                    Spacer()
+                    
+                    Button {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            showSettings = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(isDarkMode ? .white.opacity(0.8) : .black.opacity(0.7))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(isDarkMode ? Color.white.opacity(0.15) : Color.black.opacity(0.05))
+                            )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 20)
+                
+                Divider()
+                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                
+                ScrollView {
+                    VStack(spacing: 8) {
+                        // Theme toggle
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isDarkMode.toggle()
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(isDarkMode ? .yellow : .indigo)
+                                    .frame(width: 32, height: 32)
+                                    .background(
+                                        Circle()
+                                            .fill(isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
+                                    )
+                                
+                                Text(isDarkMode ? "切换为亮色模式" : "切换为深色模式")
+                                    .font(.system(size: 16, design: .rounded))
+                                    .foregroundColor(isDarkMode ? .white : .black)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $isDarkMode)
+                                    .labelsHidden()
+                                    .tint(Color(hex: "3B82F6"))
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 20)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Divider()
+                            .padding(.horizontal, 20)
+                            .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                        
+                        // Reset button
+                        Button(action: {
+                            // Show confirmation alert
+                            let alert = UIAlertController(
+                                title: "重置所有对话",
+                                message: "此操作将删除所有保存的对话历史，且不可恢复。确定要继续吗？",
+                                preferredStyle: .alert
+                            )
+                            
+                            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                            alert.addAction(UIAlertAction(title: "确定", style: .destructive) { _ in
+                                resetAll()
+                                withAnimation(.easeOut(duration: 0.25)) {
+                                    showSettings = false
+                                }
+                            })
+                            
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let rootViewController = windowScene.windows.first?.rootViewController {
+                                rootViewController.present(alert, animated: true)
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.red)
+                                    .frame(width: 32, height: 32)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.red.opacity(0.1))
+                                    )
+                                
+                                Text("重置所有对话")
+                                    .font(.system(size: 16, design: .rounded))
+                                    .foregroundColor(isDarkMode ? .white : .black)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.4) : .black.opacity(0.3))
+                            }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 20)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Divider()
+                            .padding(.horizontal, 20)
+                            .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                        
+                        // About section
+                        VStack(alignment: .leading, spacing: 20) {
+                            Text("关于")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .foregroundColor(isDarkMode ? .white : .black)
+                            
+                            // App info
+                            HStack(spacing: 16) {
+                                // App logo
+                                Group {
+                                    if let _ = UIImage(named: "AppLogo") {
+                                        Image("AppLogo")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 60, height: 60)
+                                            .cornerRadius(12)
+                                    } else {
+                                        Image(systemName: "bubble.left.and.bubble.right.fill")
+                                            .font(.system(size: 30))
+                                            .foregroundColor(Color(hex: "3B82F6"))
+                                            .frame(width: 60, height: 60)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 12)
+                                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                            )
+                                    }
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("知道 AI")
+                                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    Text("版本 1.0.0")
+                                        .font(.system(size: 14, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            
+                            // Copyright
+                            Text("© 2025 Zigao Wang. All rights reserved.")
+                                .font(.system(size: 13, design: .rounded))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                .padding(.horizontal, 20)
+                        }
+                        .padding(.vertical, 20)
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+        }
+        .frame(width: 320)
+        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
+        .frame(maxHeight: .infinity)
     }
 }
 
@@ -573,6 +985,7 @@ struct ConversationListView: View {
     @Binding var selectedConversationId: UUID?
     let isDarkMode: Bool
     let onNewChat: () -> Void
+    let onDismiss: () -> Void
     
     // Date formatter
     private let dateFormatter: DateFormatter = {
@@ -592,11 +1005,16 @@ struct ConversationListView: View {
                 
                 Spacer()
                 
-                // New chat button
-                Button(action: onNewChat) {
-                    Image(systemName: "square.and.pencil")
+                // Close sidebar button
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .padding(8)
+                        .background(
+                            Circle()
+                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                        )
                 }
             }
             .padding(16)
