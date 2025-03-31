@@ -358,11 +358,15 @@ struct ContentView: View {
                     .transition(.move(edge: .leading))
                 }
                 
-                // Settings panel overlay with proper positioning
+                // Settings as a full screen page instead of an overlay
                 if showSettings {
-                    settingsPanel
-                        .transition(.move(edge: .trailing))
-                        .zIndex(3) // Ensure it's above everything
+                    SettingsView(
+                        isDarkMode: $isDarkMode,
+                        isShowing: $showSettings,
+                        onReset: resetAll
+                    )
+                    .transition(.move(edge: .bottom))
+                    .zIndex(3)
                 }
             }
         }
@@ -1018,218 +1022,6 @@ struct ContentView: View {
         return service.currentStage == .answerGeneration
     }
     
-    // MARK: - Settings Panel
-    private var settingsPanel: some View {
-        ZStack(alignment: .trailing) {
-            // Dimmed background
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        showSettings = false
-                    }
-                }
-            
-            // Settings panel content
-            VStack(alignment: .leading, spacing: 0) {
-                // Header
-                HStack {
-                    Text("设置")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundColor(isDarkMode ? .white : .black)
-                                
-                                Spacer()
-                                
-                    Button {
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            showSettings = false
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(isDarkMode ? .white.opacity(0.8) : .black.opacity(0.7))
-                            .padding(8)
-                                            .background(
-                                Circle()
-                                    .fill(isDarkMode ? Color.white.opacity(0.15) : Color.black.opacity(0.05))
-                            )
-                    }
-                    .buttonStyle(ScaleButtonStyle())
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 20)
-                
-                Divider()
-                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
-                
-                ScrollView {
-                    VStack(spacing: 8) {
-                        // Theme toggle
-                        Button(action: {
-                            let generator = UIImpactFeedbackGenerator(style: .light)
-                            generator.impactOccurred()
-                            
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isDarkMode.toggle()
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(isDarkMode ? .yellow : .indigo)
-                                    .frame(width: 32, height: 32)
-                            .background(
-                                        Circle()
-                                            .fill(isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
-                                    )
-                                
-                                Text(isDarkMode ? "切换为亮色模式" : "切换为深色模式")
-                                    .font(.system(size: 16, design: .rounded))
-                                    .foregroundColor(isDarkMode ? .white : .black)
-                                
-                                Spacer()
-                                
-                                Toggle("", isOn: $isDarkMode)
-                                    .labelsHidden()
-                                    .tint(Color(hex: "3B82F6"))
-                            }
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 20)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(ScaleButtonStyle())
-                        
-                        Divider()
-                            .padding(.horizontal, 20)
-                            .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
-                        
-                        // Reset button
-                        Button(action: {
-                            let generator = UIImpactFeedbackGenerator(style: .medium)
-                            generator.impactOccurred()
-                            
-                            // Show confirmation alert
-                            let alert = UIAlertController(
-                                title: "重置所有对话",
-                                message: "此操作将删除所有保存的对话历史，且不可恢复。确定要继续吗？",
-                                preferredStyle: .alert
-                            )
-                            
-                            alert.addAction(UIAlertAction(title: "取消", style: .cancel))
-                            alert.addAction(UIAlertAction(title: "确定", style: .destructive) { _ in
-                                resetAll()
-                                withAnimation(.easeOut(duration: 0.25)) {
-                                    showSettings = false
-                                }
-                            })
-                            
-                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                               let rootViewController = windowScene.windows.first?.rootViewController {
-                                rootViewController.present(alert, animated: true)
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.red)
-                                    .frame(width: 32, height: 32)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.red.opacity(0.1))
-                                    )
-                                
-                                Text("重置所有对话")
-                                    .font(.system(size: 16, design: .rounded))
-                                    .foregroundColor(isDarkMode ? .white : .black)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(isDarkMode ? .white.opacity(0.4) : .black.opacity(0.3))
-                            }
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 20)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(ScaleButtonStyle())
-                        
-                        Divider()
-                            .padding(.horizontal, 20)
-                            .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
-                        
-                        // About section
-                        VStack(alignment: .leading, spacing: 20) {
-                            Text("关于")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                .foregroundColor(isDarkMode ? .white : .black)
-                                .padding(.horizontal, 20)
-                            
-                            // App info
-                            HStack(spacing: 16) {
-                                // App logo
-                                Group {
-                                    if let _ = UIImage(named: "AppLogo") {
-                                        Image("AppLogo")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 60, height: 60)
-                                            .cornerRadius(12)
-                                    } else {
-                                        Image(systemName: "bubble.left.and.bubble.right.fill")
-                                            .font(.system(size: 30))
-                                            .foregroundColor(Color(hex: "3B82F6"))
-                                            .frame(width: 60, height: 60)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 12)
-                                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                                            )
-                                    }
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("知道 AI")
-                                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                                    
-                                    Text("版本 1.0.0")
-                                        .font(.system(size: 14, design: .rounded))
-                                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                            
-                            // Copyright
-                            Text("© 2025 Zigao Wang. All rights reserved.")
-                                .font(.system(size: 13, design: .rounded))
-                                .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 20)
-                        }
-                        .padding(.top, 12)
-                    }
-                    .padding(.vertical, 8)
-                }
-            }
-        }
-        .frame(width: 320)
-        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
-        .cornerRadius(isDarkMode ? 0 : 16, corners: [.topLeft, .bottomLeft])
-        .shadow(color: Color.black.opacity(0.2), radius: 10, x: -5, y: 0)
-        .frame(maxHeight: .infinity, alignment: .trailing)
-        .gesture(
-            DragGesture()
-                .onEnded { gesture in
-                    if gesture.translation.width > 50 {
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            showSettings = false
-                        }
-                    }
-                }
-        )
-    }
-    
     // Helper function to shorten conversation query
     private func shortenConversationQuery(_ query: String) -> String {
         let maxLength = 30
@@ -1308,6 +1100,317 @@ extension Array {
     // Safe array access that prevents index out of bounds errors
     subscript(safe index: Index) -> Element? {
         return indices.contains(index) ? self[index] : nil
+    }
+}
+
+// MARK: - Settings View
+struct SettingsView: View {
+    @Binding var isDarkMode: Bool
+    @Binding var isShowing: Bool
+    var onReset: () -> Void
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // Background that matches the app's theme
+                Color(hex: isDarkMode ? "121212" : "F9F9F9")
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Theme section
+                        settingsSection(title: "显示设置") {
+                            VStack(spacing: 0) {
+                                Button(action: {
+                                    let generator = UIImpactFeedbackGenerator(style: .light)
+                                    generator.impactOccurred()
+                                    
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        isDarkMode.toggle()
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(isDarkMode ? .yellow : .indigo)
+                                            .frame(width: 36, height: 36)
+                                            .background(
+                                                Circle()
+                                                    .fill(isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
+                                            )
+                                        
+                                        Text(isDarkMode ? "亮色模式" : "深色模式")
+                                            .font(.system(size: 16, design: .rounded))
+                                            .foregroundColor(isDarkMode ? .white : .black)
+                                        
+                                        Spacer()
+                                        
+                                        Toggle("", isOn: $isDarkMode)
+                                            .labelsHidden()
+                                            .tint(Color(hex: "3B82F6"))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                            )
+                        }
+                        
+                        // Data management section
+                        settingsSection(title: "数据管理") {
+                            VStack(spacing: 0) {
+                                Button(action: {
+                                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                                    generator.impactOccurred()
+                                    
+                                    // Show confirmation alert
+                                    let alert = UIAlertController(
+                                        title: "重置所有对话",
+                                        message: "此操作将删除所有保存的对话历史，且不可恢复。确定要继续吗？",
+                                        preferredStyle: .alert
+                                    )
+                                    
+                                    alert.addAction(UIAlertAction(title: "取消", style: .cancel))
+                                    alert.addAction(UIAlertAction(title: "确定", style: .destructive) { _ in
+                                        onReset()
+                                        withAnimation(.easeOut(duration: 0.25)) {
+                                            isShowing = false
+                                        }
+                                    })
+                                    
+                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                       let rootViewController = windowScene.windows.first?.rootViewController {
+                                        rootViewController.present(alert, animated: true)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.red)
+                                            .frame(width: 36, height: 36)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.red.opacity(0.1))
+                                            )
+                                        
+                                        Text("重置所有对话")
+                                            .font(.system(size: 16, design: .rounded))
+                                            .foregroundColor(isDarkMode ? .white : .black)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14))
+                                            .foregroundColor(isDarkMode ? .white.opacity(0.4) : .black.opacity(0.3))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                            )
+                        }
+                        
+                        // About section with app info
+                        settingsSection(title: "关于 知道AI") {
+                            VStack(spacing: 24) {
+                                // App logo and basic info
+                                HStack(spacing: 20) {
+                                    // App logo
+                                    Group {
+                                        if let _ = UIImage(named: "AppLogo") {
+                                            Image("AppLogo")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 72, height: 72)
+                                                .cornerRadius(14)
+                                        } else {
+                                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                                                .font(.system(size: 36))
+                                                .foregroundColor(Color(hex: "3B82F6"))
+                                                .frame(width: 72, height: 72)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 14)
+                                                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                                )
+                                        }
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("知道 AI")
+                                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                        
+                                        Text("版本 1.0.0")
+                                            .font(.system(size: 16, design: .rounded))
+                                            .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
+                                
+                                // App description
+                                Text("知道AI是一款智能研究助手，帮助用户获取学术论文分析、研究数据和相关图片资料，提供深入的科研问题解答。")
+                                    .font(.system(size: 15, design: .rounded))
+                                    .lineSpacing(4)
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+                                    .padding(.horizontal, 16)
+                                
+                                // Features list
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("主要功能")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    featureRow(iconName: "magnifyingglass", text: "智能搜索和分析学术论文")
+                                    featureRow(iconName: "doc.text", text: "提供多语言研究内容解答")
+                                    featureRow(iconName: "photo.on.rectangle", text: "相关图片和文献推荐")
+                                    featureRow(iconName: "archivebox", text: "对话历史保存和管理")
+                                }
+                                .padding(.horizontal, 16)
+                                
+                                Divider()
+                                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                                    .padding(.horizontal, 16)
+                                
+                                // Developer info
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("开发者")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    
+                                    HStack(spacing: 16) {
+                                        // Developer profile image
+                                        ZStack {
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    Color(hex: "6366F1"),
+                                                    Color(hex: "8B5CF6")
+                                                ]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                            .clipShape(Circle())
+                                            .frame(width: 42, height: 42)
+                                            
+                                            Text("ZW")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Zigao Wang")
+                                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                            
+                                            Text("研究员 & 开发者")
+                                                .font(.system(size: 14, design: .rounded))
+                                                .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                                        }
+                                        
+                                        Spacer()
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                
+                                // Copyright
+                                Text("© 2025 Zigao Wang. All rights reserved.")
+                                    .font(.system(size: 14, design: .rounded))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.top, 8)
+                                    .padding(.bottom, 16)
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                            )
+                        }
+                        
+                        Spacer().frame(height: 30)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("设置")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : .black)
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            isShowing = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(isDarkMode ? .white : .black)
+                    }
+                }
+            }
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
+    }
+    
+    // Helper function for creating settings sections
+    private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundColor(isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
+            
+            content()
+        }
+    }
+    
+    // Helper function for feature rows in about section
+    private func featureRow(iconName: String, text: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: iconName)
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "3B82F6"))
+                .frame(width: 24, height: 24)
+                .background(
+                    Circle()
+                        .fill(Color(hex: "3B82F6").opacity(0.1))
+                )
+            
+            Text(text)
+                .font(.system(size: 14, design: .rounded))
+                .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+            
+            Spacer()
+        }
     }
 }
 
