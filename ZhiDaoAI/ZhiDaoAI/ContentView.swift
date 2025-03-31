@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var isDirectAnswer = false
     @State private var isDarkMode = false
     @State private var showSettings = false
+    @State private var imageUrls: [String] = []
     
     // Animation states
     @State private var searchBarOffset: CGFloat = 0
@@ -47,6 +48,26 @@ struct ContentView: View {
                         .padding(.horizontal, contentPadding)
                         .padding(.bottom, 12)
                         .transition(.opacity)
+                }
+
+                // Image results
+                if !imageUrls.isEmpty {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 10) {
+                            ForEach(imageUrls, id: \ .self) { url in
+                                AsyncImage(url: URL(string: url)) { image in
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 200)
+                                        .cornerRadius(10)
+                                } placeholder: {
+                                    ProgressView()
+                                }
+                            }
+                        }
+                        .padding(.horizontal, contentPadding)
+                    }
                 }
                 
                 ScrollView {
@@ -254,6 +275,7 @@ struct ContentView: View {
                     if !query.isEmpty {
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                         service.streamQuestion(query: query)
+                        performImageSearch()
                         
                         withAnimation {
                             isSearchFocused = false
@@ -650,6 +672,20 @@ struct ContentView: View {
         
         // Start streaming the question
         service.streamQuestion(query: query)
+    }
+    
+    private func performImageSearch() {
+        let imageSearchService = ImageSearchService()
+        imageSearchService.searchImages(query: query) { result in
+            switch result {
+            case .success(let urls):
+                DispatchQueue.main.async {
+                    self.imageUrls = urls
+                }
+            case .failure(let error):
+                print("Error fetching images: \(error)")
+            }
+        }
     }
 }
 
