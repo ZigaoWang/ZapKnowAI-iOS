@@ -274,10 +274,11 @@ struct ContentView: View {
                     .transition(.move(edge: .leading))
                 }
                 
-                // Settings panel overlay
+                // Settings panel overlay with proper positioning
                 if showSettings {
                     settingsPanel
                         .transition(.move(edge: .trailing))
+                        .zIndex(3) // Ensure it's above everything
                 }
             }
         }
@@ -479,7 +480,7 @@ struct ContentView: View {
         HStack(spacing: 16) {
             // Menu button
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                withAnimation(.easeOut(duration: 0.25)) {
                     showSidebar.toggle()
                 }
             } label: {
@@ -492,6 +493,7 @@ struct ContentView: View {
                             .fill(Color(hex: isDarkMode ? "2A2A2A" : "F1F5F9").opacity(0.8))
                     )
             }
+            .buttonStyle(ScaleButtonStyle())
             
             Spacer()
             
@@ -508,7 +510,10 @@ struct ContentView: View {
             
             // Settings button
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                let generator = UIImpactFeedbackGenerator(style: .light)
+                generator.impactOccurred()
+                
+                withAnimation(.easeOut(duration: 0.25)) {
                     showSettings.toggle()
                 }
             } label: {
@@ -521,6 +526,7 @@ struct ContentView: View {
                             .fill(Color(hex: isDarkMode ? "2A2A2A" : "F1F5F9").opacity(0.8))
                     )
             }
+            .buttonStyle(ScaleButtonStyle())
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -825,6 +831,7 @@ struct ContentView: View {
                                     .fill(isDarkMode ? Color.white.opacity(0.15) : Color.black.opacity(0.05))
                             )
                     }
+                    .buttonStyle(ScaleButtonStyle())
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -837,6 +844,9 @@ struct ContentView: View {
                     VStack(spacing: 8) {
                         // Theme toggle
                         Button(action: {
+                            let generator = UIImpactFeedbackGenerator(style: .light)
+                            generator.impactOccurred()
+                            
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 isDarkMode.toggle()
                             }
@@ -863,8 +873,9 @@ struct ContentView: View {
                             }
                             .padding(.vertical, 12)
                             .padding(.horizontal, 20)
+                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(ScaleButtonStyle())
                         
                         Divider()
                             .padding(.horizontal, 20)
@@ -872,6 +883,9 @@ struct ContentView: View {
                         
                         // Reset button
                         Button(action: {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            
                             // Show confirmation alert
                             let alert = UIAlertController(
                                 title: "重置所有对话",
@@ -914,8 +928,9 @@ struct ContentView: View {
                             }
                             .padding(.vertical, 12)
                             .padding(.horizontal, 20)
+                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(ScaleButtonStyle())
                         
                         Divider()
                             .padding(.horizontal, 20)
@@ -926,6 +941,7 @@ struct ContentView: View {
                             Text("关于")
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : .black)
+                                .padding(.horizontal, 20)
                             
                             // App info
                             HStack(spacing: 16) {
@@ -966,8 +982,9 @@ struct ContentView: View {
                                 .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                 .padding(.horizontal, 20)
+                                .padding(.bottom, 20)
                         }
-                        .padding(.vertical, 20)
+                        .padding(.top, 12)
                     }
                     .padding(.vertical, 8)
                 }
@@ -975,7 +992,19 @@ struct ContentView: View {
         }
         .frame(width: 320)
         .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
-        .frame(maxHeight: .infinity)
+        .cornerRadius(isDarkMode ? 0 : 16, corners: [.topLeft, .bottomLeft])
+        .shadow(color: Color.black.opacity(0.2), radius: 10, x: -5, y: 0)
+        .frame(maxHeight: .infinity, alignment: .trailing)
+        .gesture(
+            DragGesture()
+                .onEnded { gesture in
+                    if gesture.translation.width > 50 {
+                        withAnimation(.easeOut(duration: 0.25)) {
+                            showSettings = false
+                        }
+                    }
+                }
+        )
     }
 }
 
