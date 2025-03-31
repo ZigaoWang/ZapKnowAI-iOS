@@ -25,4 +25,7 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+    
+    // App theme colors
+    static let perplexityBlue = Color(hex: "3B82F6")
 }

@@ -10,216 +10,315 @@ import Combine
 
 struct ContentView: View {
     @StateObject private var service = ZhiDaoService()
+    @StateObject private var storageService = ConversationStorageService()
     @State private var query = ""
     @State private var isSearchFocused = false
     @State private var showClearButton = false
     @State private var isTyping = false
-    @State private var isDirectAnswer = false
     @State private var isDarkMode = false
     @State private var showSettings = false
     @State private var imageUrls: [String] = []
-    @State private var articles: [Article] = [] // Add state variable for articles
+    @State private var articles: [Article] = []
+    
+    // Sidebar and conversation states
+    @State private var showSidebar = true
+    @State private var selectedConversationId: UUID? = nil
     
     // Animation states
-    @State private var searchBarOffset: CGFloat = 0
     @State private var animateGradient = false
     
     private let searchBarHeight: CGFloat = 50
-    private let placeholderText = "输入您的研究问题..."
-    private let contentPadding: CGFloat = 16
+    private let placeholderText = "Ask a question..."
     
     var body: some View {
         ZStack {
-            // Background gradient - simplified and more subtle
-            backgroundGradient
+            Color(hex: isDarkMode ? "121212" : "F9F9F9")
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // App header
-                appHeader
+                // Top navigation area
+                topBar
                 
-                // Search bar
-                searchBar
-                    .padding(.horizontal, contentPadding)
-                    .padding(.bottom, 16)
-                
-                // Status message
-                if !service.statusMessage.isEmpty {
-                    statusMessageView(service.statusMessage)
-                        .padding(.horizontal, contentPadding)
-                        .padding(.bottom, 12)
-                        .transition(.opacity)
-                }
-
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Image results
-                        if !imageUrls.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("相关图片")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                                    .padding(.horizontal, contentPadding)
-                                
-                                ScrollView(.horizontal) {
-                                    HStack(spacing: 10) {
-                                        ForEach(imageUrls, id: \.self) { url in
-                                            AsyncImage(url: URL(string: url)) { image in
-                                                image
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(height: 200)
-                                                    .cornerRadius(10)
-                                            } placeholder: {
-                                                ProgressView()
-                                            }
-                                        }
-                                    }
-                                    .padding(.horizontal, contentPadding)
+                // Main content
+                ZStack {
+                    // Sidebar for conversation history
+                    HStack(spacing: 0) {
+                        // Left sidebar (conversation list)
+                        if showSidebar {
+                            ConversationListView(
+                                storageService: storageService,
+                                selectedConversationId: $selectedConversationId,
+                                isDarkMode: isDarkMode,
+                                onNewChat: startNewChat
+                            )
+                            .frame(width: 300)
+                            .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
+                            .transition(.move(edge: .leading))
+                        }
+                        
+                        // Main chat area
+                        VStack(spacing: 0) {
+                            if let selectedId = selectedConversationId,
+                               let conversation = storageService.savedConversations.first(where: { $0.id == selectedId }) {
+                                // Show saved conversation
+                                SavedConversationView(
+                                    conversation: conversation,
+                                    isDarkMode: isDarkMode
+                                )
+                            } else {
+                                if service.accumulatedTokens.isEmpty && imageUrls.isEmpty && articles.isEmpty && service.papers.isEmpty && !service.isStreaming {
+                                    // Empty state / welcome screen
+                                    welcomeView
+                                } else {
+                                    // Active chat with results
+                                    chatResultsView
                                 }
                             }
-                            .padding(.bottom, 16)
+                            
+                            // Input area always shown at bottom
+                            queryInputBar
                         }
-                        
-                        // Articles section
-                        if !articles.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("延伸阅读")
-                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                                    .padding(.horizontal, contentPadding)
-                                
-                                ForEach(articles) { article in
-                                    ArticleCardView(article: article, isDarkMode: isDarkMode)
-                                        .padding(.horizontal, contentPadding)
-                                        .padding(.bottom, 8)
-                                }
-                            }
-                            .padding(.bottom, 16)
-                        }
-                        
-                        // Progress stages
-                        if service.isStreaming || !service.completedStages.isEmpty {
-                            ProgressStagesView(
-                                currentStage: service.currentStage,
-                                completedStages: Array(service.completedStages)
-                            )
-                            .padding(.horizontal, contentPadding)
-                            .padding(.top, 4)
-                            .padding(.bottom, 4)
-                            .transition(.opacity)
-                        }
-                        
-                        // Papers list - only show when in paper retrieval or analysis stage
-                        if (!service.papers.isEmpty && isPaperRelevantStage) || 
-                           (service.isStreaming && isPaperSearching) {
-                            PapersListView(
-                                papers: service.papers,
-                                onPaperTap: { paper in
-                                    // Handle paper tap
-                                }
-                            )
-                            .padding(.horizontal, contentPadding)
-                            .transition(.opacity)
-                        }
-                        
-                        // Answer section
-                        if !service.accumulatedTokens.isEmpty || isGeneratingResponse {
-                            answerView
-                                .padding(.horizontal, contentPadding)
-                                .padding(.bottom, 12)
-                                .transition(.opacity)
-                        }
+                        .frame(maxWidth: .infinity)
+                        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
                     }
-                    .padding(.bottom, 16)
                 }
-                .scrollDismissesKeyboard(.immediately)
-                .animation(.easeInOut(duration: 0.2), value: service.isStreaming)
-                .animation(.easeInOut(duration: 0.2), value: service.papers.count)
-                .animation(.easeInOut(duration: 0.2), value: service.accumulatedTokens)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            // Settings panel
+            // Settings panel overlay
             if showSettings {
                 settingsPanel
                     .transition(.move(edge: .trailing))
             }
         }
         .preferredColorScheme(isDarkMode ? .dark : .light)
-        .onAppear {
-            withAnimation {
-                animateGradient = true
-            }
-        }
         .onChange(of: service.isStreaming) { _, isStreaming in
-            if !isStreaming {
-                // When streaming completes, update UI
+            if !isStreaming && !service.accumulatedTokens.isEmpty {
+                // When streaming completes, update UI and save conversation
                 withAnimation {
                     isTyping = false
                 }
+                
+                // Save the completed conversation
+                saveCurrentConversation()
             }
         }
     }
     
-    // Helper computed properties for improved stage tracking
-    private var isPaperSearching: Bool {
-        return service.currentStage == .paperRetrieval
-    }
-    
-    private var isPaperRelevantStage: Bool {
-        return service.currentStage == .paperRetrieval || 
-               service.currentStage == .paperAnalysis ||
-               service.completedStages.contains(.paperRetrieval)
-    }
-    
-    private var isGeneratingResponse: Bool {
-        return service.currentStage == .answerGeneration
-    }
-    
-    // MARK: - Background Gradient
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(
-                colors: isDarkMode ? 
-                    [Color(hex: "121212"), Color(hex: "1C1C1E")] :
-                    [Color(hex: "F8FAFF"), Color(hex: "F0F4FF")]
-            ),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-    
-    // MARK: - App Header
-    private var appHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+    // Welcome screen for empty state
+    private var welcomeView: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                Spacer().frame(height: 60)
+                
+                // App logo with fallback
+                Group {
+                    if let _ = UIImage(named: "AppLogo") {
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                            .cornerRadius(20)
+                    } else {
+                        Image(systemName: "bubble.left.and.bubble.right.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                            .frame(width: 80, height: 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                            )
+                    }
+                }
+                .padding(.bottom, 16)
+                
                 Text("知道 AI")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
                 Text("AI 研究助手")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(size: 18, weight: .medium, design: .rounded))
                     .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                    .padding(.bottom, 16)
+                
+                // Example questions
+                VStack(spacing: 12) {
+                    Text("试试以下问题")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                        .padding(.bottom, 8)
+                    
+                    ForEach(exampleQuestions, id: \.self) { question in
+                        Button {
+                            query = question
+                            submitQuery()
+                        } label: {
+                            HStack {
+                                Text(question)
+                                    .font(.system(size: 15, design: .rounded))
+                                    .multilineTextAlignment(.leading)
+                                    .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
+                                
+                                Spacer()
+                                
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(Color(hex: "3B82F6"))
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                            )
+                        }
+                    }
+                }
+                .frame(maxWidth: 600)
+                .padding(.horizontal, 20)
+                
+                Spacer()
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    // Chat results view
+    private var chatResultsView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                // Status message
+                if !service.statusMessage.isEmpty {
+                    statusMessageView(service.statusMessage)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+                        .transition(.opacity)
+                }
+                
+                // Progress stages
+                if service.isStreaming || !service.completedStages.isEmpty {
+                    ProgressStagesView(
+                        currentStage: service.currentStage,
+                        completedStages: service.completedStages
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .padding(.bottom, 4)
+                    .transition(.opacity)
+                }
+                
+                // Papers list
+                if (!service.papers.isEmpty && isPaperRelevantStage) || 
+                   (service.isStreaming && isPaperSearching) {
+                    PapersListView(
+                        papers: service.papers,
+                        onPaperTap: { paper in
+                            // Handle paper tap
+                        }
+                    )
+                    .padding(.horizontal, 16)
+                    .transition(.opacity)
+                }
+                
+                // Image results
+                if !imageUrls.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("相关图片")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                            .padding(.horizontal, 16)
+                        
+                        ScrollView(.horizontal) {
+                            HStack(spacing: 10) {
+                                ForEach(imageUrls, id: \.self) { url in
+                                    AsyncImage(url: URL(string: url)) { image in
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: 200)
+                                            .cornerRadius(10)
+                                    } placeholder: {
+                                        ProgressView()
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                    .padding(.bottom, 16)
+                }
+                
+                // Articles section
+                if !articles.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("延伸阅读")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                            .padding(.horizontal, 16)
+                        
+                        ForEach(articles) { article in
+                            ArticleCardView(article: article, isDarkMode: isDarkMode)
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 8)
+                        }
+                    }
+                    .padding(.bottom, 16)
+                }
+                
+                // Answer section
+                if !service.accumulatedTokens.isEmpty || isGeneratingResponse {
+                    answerView
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                        .transition(.opacity)
+                }
+                
+                Spacer().frame(height: 80) // Bottom padding for input field
+            }
+            .animation(.easeInOut(duration: 0.2), value: service.isStreaming)
+            .animation(.easeInOut(duration: 0.2), value: service.papers.count)
+            .animation(.easeInOut(duration: 0.2), value: service.accumulatedTokens)
+        }
+        .scrollDismissesKeyboard(.immediately)
+    }
+    
+    // Top navigation bar
+    private var topBar: some View {
+        HStack {
+            // Menu button
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    showSidebar.toggle()
+                }
+            }) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .padding(8)
             }
             
             Spacer()
             
-            // Theme toggle button
+            // App name
+            if !showSidebar {
+                Text("知道 AI")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+            }
+            
+            Spacer()
+            
+            // Theme toggle
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isDarkMode.toggle()
                 }
             }) {
                 Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(isDarkMode ? .yellow : Color(hex: "6B7280"))
-                    .frame(width: 32, height: 32)
-                    .background(
-                        Circle()
-                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                    )
+                    .padding(8)
             }
-            .buttonStyle(ScaleButtonStyle())
             
             // Settings button
             Button(action: {
@@ -227,104 +326,52 @@ struct ContentView: View {
                     showSettings.toggle()
                 }
             }) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 16, weight: .medium))
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .frame(width: 32, height: 32)
-                    .background(
-                        Circle()
-                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                    )
+                    .padding(8)
             }
-            .buttonStyle(ScaleButtonStyle())
         }
-        .padding(.horizontal, contentPadding)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
+        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 2, y: 1)
     }
     
-    // MARK: - Search Bar
-    private var searchBar: some View {
-        ZStack(alignment: .leading) {
-            // Background
-            RoundedRectangle(cornerRadius: 16)
-                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+    // Input bar at bottom of screen
+    private var queryInputBar: some View {
+        VStack(spacing: 0) {
+            Divider()
+                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
             
             HStack(spacing: 12) {
-                // Search icon
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16))
-                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                    .padding(.leading, 16)
+                // Text input field
+                TextField(placeholderText, text: $query)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(isDarkMode ? Color.white.opacity(0.2) : Color.black.opacity(0.2), lineWidth: 1)
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                            )
+                    )
+                    .font(.system(size: 16, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
                 
-                // Text field
-                ZStack(alignment: .leading) {
-                    // Placeholder
-                    if query.isEmpty && !isSearchFocused {
-                        Text(placeholderText)
-                            .font(.system(size: 16, design: .rounded))
-                            .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                    }
-                    
-                    TextField("", text: $query)
-                        .font(.system(size: 16, design: .rounded))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
-                        .frame(height: searchBarHeight)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isSearchFocused = true
-                                showClearButton = !query.isEmpty
-                            }
-                        }
+                // Send button
+                Button(action: submitQuery) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 30))
+                        .foregroundColor(query.isEmpty ? (isDarkMode ? Color.white.opacity(0.3) : Color.black.opacity(0.3)) : Color(hex: "3B82F6"))
                 }
-                
-                Spacer()
-                
-                // Clear button
-                if showClearButton && !query.isEmpty {
-                    Button(action: {
-                        withAnimation {
-                            query = ""
-                        }
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
-                    }
-                    .padding(.trailing, 8)
-                    .transition(.opacity)
-                }
-                
-                // Search button
-                Button(action: {
-                    if !query.isEmpty {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        service.streamQuestion(query: query)
-                        performImageSearch()
-                        
-                        withAnimation {
-                            isSearchFocused = false
-                            isTyping = true
-                        }
-                    }
-                }) {
-                    Circle()
-                        .fill(Color(hex: "3B82F6"))
-                        .frame(width: 36, height: 36)
-                        .overlay(
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white)
-                        )
-                }
-                .disabled(query.isEmpty)
-                .padding(.trailing, 8)
+                .disabled(query.isEmpty || service.isStreaming)
             }
-            .frame(height: searchBarHeight)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(hex: isDarkMode ? "1A1A1A" : "FFFFFF"))
         }
-        .frame(height: searchBarHeight)
-        .padding(.vertical, 8)
     }
     
     // MARK: - Status Message View
@@ -425,327 +472,57 @@ struct ContentView: View {
                     .padding(.bottom, 12)
                 }
             }
-            .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-            .cornerRadius(20)
-            .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+            .background(isDarkMode ? Color(hex: "222222") : Color.white)
+            .cornerRadius(16)
+            .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), radius: 12, x: 0, y: 2)
         }
     }
     
-    // MARK: - Progress Stages View
-    struct ProgressStagesView: View {
-        var currentStage: ProgressStage?
-        var completedStages: [ProgressStage]
-        @Environment(\.colorScheme) private var colorScheme
+    // MARK: - Helper Functions
+    
+    // Submit a new query
+    private func submitQuery() {
+        guard !query.isEmpty else { return }
         
-        private var isDarkMode: Bool {
-            colorScheme == .dark
-        }
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        service.streamQuestion(query: query)
+        performImageSearch()
         
-        var body: some View {
-            VStack(alignment: .leading, spacing: 12) {
-                // Header with progress indicator
-                HStack(spacing: 10) {
-                    Image(systemName: "chart.bar.doc.horizontal")
-                        .font(.system(size: 16))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
-                    
-                    Text("研究进度")
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    
-                    Spacer()
-                    
-                    // Current progress
-                    Text("\(completedStages.count + (currentStage != nil ? 1 : 0))/\(ProgressStage.allCases.count)")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
-                }
-                .padding(.horizontal, 4)
-                
-                ZStack {
-                    // Card background
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                        .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
-                    
-                    VStack(spacing: 0) {
-                        ForEach(Array(ProgressStage.allCases.enumerated()), id: \.element) { index, stage in
-                            let isCompleted = completedStages.contains(stage)
-                            let isActive = currentStage == stage
-                            let isLast = index == ProgressStage.allCases.count - 1
-                            
-                            HStack(spacing: 12) {
-                                // Timeline visualization with connector line
-                                ZStack(alignment: .center) {
-                                    // Vertical connector line
-                                    if !isLast {
-                                        Rectangle()
-                                            .fill(isCompleted ? Color(hex: "10B981") : Color(hex: "D1D5DB"))
-                                            .frame(width: 2)
-                                            .offset(y: 10)
-                                    }
-                                    
-                                    // Stage number indicator
-                                    ZStack {
-                                        Circle()
-                                            .fill(isCompleted ? Color(hex: "10B981") : 
-                                                  isActive ? Color(hex: "3B82F6") : 
-                                                  Color(hex: "D1D5DB"))
-                                            .frame(width: 24, height: 24)
-                                        
-                                        if isCompleted {
-                                            Image(systemName: "checkmark")
-                                                .font(.system(size: 10, weight: .bold))
-                                                .foregroundColor(.white)
-                                        } else {
-                                            Text("\(stageNumber(stage))")
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(.white)
-                                        }
-                                    }
-                                }
-                                .frame(width: 24)
-                                
-                                // Stage information
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(stageName(stage))
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                                    
-                                    Text(stageDescription(stage))
-                                        .font(.system(size: 12))
-                                        .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                // Status indicator
-                                HStack(spacing: 4) {
-                                    if isCompleted {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(Color(hex: "10B981"))
-                                            .font(.system(size: 12))
-                                        
-                                        Text("已完成")
-                                            .font(.system(size: 12, weight: .medium))
-                                            .foregroundColor(Color(hex: "10B981"))
-                                    } else if isActive {
-                                        Text("进行中")
-                                            .font(.system(size: 12, weight: .medium))
-                                            .foregroundColor(Color(hex: "3B82F6"))
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 2)
-                                            .background(
-                                                Capsule()
-                                                    .fill(Color(hex: "3B82F6").opacity(0.15))
-                                            )
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 12)
-                            .padding(.horizontal, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 0)
-                                    .fill(Color.clear)
-                            )
-                            
-                            if !isLast {
-                                Divider()
-                                    .padding(.leading, 36)
-                                    .opacity(0.5)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-        
-        // Helper functions
-        private func stageNumber(_ stage: ProgressStage) -> Int {
-            switch stage {
-            case .evaluation:
-                return 1
-            case .paperRetrieval:
-                return 2
-            case .paperAnalysis:
-                return 3
-            case .answerGeneration:
-                return 4
-            }
-        }
-        
-        private func stageName(_ stage: ProgressStage) -> String {
-            switch stage {
-            case .evaluation:
-                return "评估问题"
-            case .paperRetrieval:
-                return "检索论文"
-            case .paperAnalysis:
-                return "分析论文"
-            case .answerGeneration:
-                return "生成答案"
-            }
-        }
-        
-        private func stageDescription(_ stage: ProgressStage) -> String {
-            switch stage {
-            case .evaluation:
-                return "分析您的问题并确定研究方向"
-            case .paperRetrieval:
-                return "搜索和筛选相关学术论文"
-            case .paperAnalysis:
-                return "深入分析论文内容和关键发现"
-            case .answerGeneration:
-                return "综合研究结果生成全面答案"
-            }
+        withAnimation {
+            isSearchFocused = false
+            isTyping = true
+            selectedConversationId = nil
         }
     }
     
-    // MARK: - Settings Panel
-    private var settingsPanel: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("关于")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .padding(.top, 20)
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("知道 AI")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    
-                    Text("由 Zigao Wang 开发")
-                        .font(.system(size: 14))
-                        .foregroundColor(isDarkMode ? Color(hex: "D1D5DB") : Color(hex: "6B7280"))
-                    
-                    Button(action: {
-                        if let url = URL(string: "https://github.com/zigaowang") {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "link")
-                                .font(.system(size: 14))
-                            Text("GitHub")
-                                .font(.system(size: 14))
-                        }
-                        .foregroundColor(Color(hex: "3B82F6"))
-                    }
-                    .buttonStyle(ScaleButtonStyle())
-                    .padding(.top, 4)
-                }
-                .padding(.top, 8)
-                
-                Spacer()
-            }
-            .padding(24)
-            .frame(width: UIScreen.main.bounds.width * 0.8)
-            .background(
-                isDarkMode ? Color(hex: "1A1A1A") : Color.white
-            )
-            .cornerRadius(20)
-            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 0)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-            
-            // Close button
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    showSettings = false
-                }
-            }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .padding(12)
-                    .background(
-                        Circle()
-                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-                    )
-            }
-            .buttonStyle(ScaleButtonStyle())
-            .padding(20)
+    // Start a brand new chat, clearing everything
+    private func startNewChat() {
+        withAnimation {
+            // Clear all data
+            query = ""
+            service.reset()
+            imageUrls = []
+            articles = []
+            selectedConversationId = nil
         }
-        .edgesIgnoringSafeArea(.all)
-        .background(
-            Color.black.opacity(0.4)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        showSettings = false
-                    }
-                }
+    }
+    
+    // Save the current conversation when complete
+    private func saveCurrentConversation() {
+        // Only save if we have an answer
+        guard !service.accumulatedTokens.isEmpty, !query.isEmpty else { return }
+        
+        storageService.saveConversation(
+            query: query,
+            answer: service.accumulatedTokens,
+            papers: service.papers,
+            imageUrls: imageUrls,
+            articles: articles,
+            completedStages: service.completedStages
         )
     }
     
-    // MARK: - Article Card View
-    struct ArticleCardView: View {
-        let article: Article
-        let isDarkMode: Bool
-        
-        var body: some View {
-            Button(action: {
-                if let url = URL(string: article.url) {
-                    UIApplication.shared.open(url)
-                }
-            }) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(article.title)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                        .lineLimit(2)
-                    
-                    Text(article.content)
-                        .font(.system(size: 14, design: .rounded))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
-                        .lineLimit(3)
-                    
-                    HStack {
-                        Text(article.url)
-                            .font(.system(size: 12, design: .rounded))
-                            .foregroundColor(Color(hex: "3B82F6"))
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "arrow.up.right")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color(hex: "3B82F6"))
-                    }
-                }
-                .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color.white)
-                        .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 4, x: 0, y: 1)
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-    }
-    
-    // MARK: - Actions
-    private func startSearch() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        
-        // Add haptic feedback
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
-        
-        // Animate search button press
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            isSearchFocused = false
-            showClearButton = false
-            isTyping = true
-        }
-        
-        // Start streaming the question
-        service.streamQuestion(query: query)
-    }
-    
+    // Image search function
     private func performImageSearch() {
         let imageSearchService = ImageSearchService()
         imageSearchService.searchImagesAndArticles(query: query) { result in
@@ -758,6 +535,253 @@ struct ContentView: View {
             case .failure(let error):
                 print("Error fetching search results: \(error)")
             }
+        }
+    }
+    
+    // Example questions to display on the welcome screen
+    private var exampleQuestions: [String] = [
+        "癌症治疗的最新研究进展是什么？",
+        "量子计算如何应用于密码学？",
+        "机器学习在医疗诊断中的应用有哪些？",
+        "全球变暖对海洋生态系统有什么影响？"
+    ]
+    
+    // Helper computed properties for improved stage tracking
+    private var isPaperSearching: Bool {
+        return service.currentStage == .paperRetrieval
+    }
+    
+    private var isPaperRelevantStage: Bool {
+        return service.currentStage == .paperRetrieval || 
+               service.currentStage == .paperAnalysis ||
+               service.completedStages.contains(.paperRetrieval)
+    }
+    
+    private var isGeneratingResponse: Bool {
+        return service.currentStage == .answerGeneration
+    }
+    
+    // MARK: - Settings Panel
+    private var settingsPanel: some View {
+        SettingsPanel(isVisible: $showSettings, isDarkMode: isDarkMode)
+    }
+}
+
+// MARK: - Redesigned Conversation List View
+struct ConversationListView: View {
+    @ObservedObject var storageService: ConversationStorageService
+    @Binding var selectedConversationId: UUID?
+    let isDarkMode: Bool
+    let onNewChat: () -> Void
+    
+    // Date formatter
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter
+    }()
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header area
+            HStack {
+                Text("知道 AI")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                
+                Spacer()
+                
+                // New chat button
+                Button(action: onNewChat) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                }
+            }
+            .padding(16)
+            
+            // New Chat button
+            Button(action: onNewChat) {
+                HStack(spacing: 12) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white)
+                    
+                    Text("新对话")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(hex: "3B82F6"))
+                )
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            
+            // Search box
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 14))
+                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                
+                Text("搜索对话")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                
+                Spacer()
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+            )
+            .padding(.horizontal, 16)
+            
+            Divider()
+                .padding(.vertical, 8)
+                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+            
+            Text("今天")
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            
+            // Conversations list
+            if storageService.savedConversations.isEmpty {
+                // Empty state
+                VStack(spacing: 16) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                        .font(.system(size: 36))
+                        .foregroundColor(isDarkMode ? Color.white.opacity(0.3) : Color(hex: "D1D5DB"))
+                    
+                    Text("暂无历史对话")
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .foregroundColor(isDarkMode ? Color.white.opacity(0.7) : Color(hex: "6B7280"))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 60)
+                .frame(maxWidth: .infinity)
+            } else {
+                // List of conversations
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(storageService.savedConversations.sorted(by: { $0.timestamp > $1.timestamp })) { conversation in
+                            ConversationRowItem(
+                                conversation: conversation,
+                                isSelected: selectedConversationId == conversation.id,
+                                dateFormatter: dateFormatter,
+                                isDarkMode: isDarkMode
+                            )
+                            .onTapGesture {
+                                withAnimation {
+                                    selectedConversationId = conversation.id
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            // User profile
+            HStack(spacing: 12) {
+                // User avatar
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "6366F1"))
+                        .frame(width: 36, height: 36)
+                    
+                    Text("ZW")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                }
+                
+                // User name
+                Text("Zigao Wang")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                
+                Spacer()
+                
+                // Settings
+                Button(action: {
+                    // Settings action
+                }) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                        )
+                }
+            }
+            .padding(16)
+            .background(isDarkMode ? Color(hex: "1A1A1A") : Color(hex: "FFFFFF"))
+            .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 4, y: -2)
+        }
+    }
+}
+
+// Conversation row item in the sidebar
+struct ConversationRowItem: View {
+    let conversation: SavedConversation
+    let isSelected: Bool
+    let dateFormatter: DateFormatter
+    let isDarkMode: Bool
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon
+            Image(systemName: "text.bubble.fill")
+                .font(.system(size: 18))
+                .foregroundColor(Color(hex: "3B82F6"))
+            
+            // Text content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(shortenedQuery)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .lineLimit(1)
+                
+                Text(dateFormatter.string(from: conversation.timestamp))
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "6B7280"))
+            }
+            
+            Spacer()
+            
+            if isSelected {
+                Circle()
+                    .fill(Color(hex: "3B82F6"))
+                    .frame(width: 6, height: 6)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isSelected ? (isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6")) : Color.clear)
+        )
+        .padding(.horizontal, 8)
+    }
+    
+    // Limit query length for display
+    private var shortenedQuery: String {
+        let maxLength = 30
+        if conversation.query.count <= maxLength {
+            return conversation.query
+        } else {
+            let endIndex = conversation.query.index(conversation.query.startIndex, offsetBy: maxLength)
+            return String(conversation.query[..<endIndex]) + "..."
         }
     }
 }
