@@ -1,0 +1,73 @@
+// Progress stages
+"正在评估问题范围" = "Evaluating question scope";
+"正在搜索相关论文" = "Searching for relevant papers";
+"正在分析论文内容" = "Analyzing paper content";
+"正在生成最终答案" = "Generating final answer";
+
+// Image gallery
+"正在查找相关图片..." = "Searching for relevant images...";
+"我们正在搜索与您的问题相关的图片" = "We are searching for images related to your question";
+"AI 生成" = "AI Generated";
+
+// Saved conversations
+"研究回答" = "Research Answer";
+"复制" = "Copy";
+
+// Typing indicator
+"正在生成回答" = "Generating answer...";
+
+// Placeholder text
+"Ask a question..." = "Ask a question...";
+
+// App name and branding
+"知道 AI" = "Zap Know AI";
+"你的研究伙伴" = "Your Research Partner";
+"智能研究助手" = "Smart Research Assistant";
+
+// Navigation and actions
+"新对话" = "New Chat";
+"搜索对话" = "Search Conversations";
+"今天" = "Today";
+"暂无历史对话" = "No Conversation History";
+"开始一个新对话来探索知识" = "Start a new conversation to explore knowledge";
+"研究员" = "Researcher";
+
+// Content sections
+"试试以下问题" = "Try These Questions";
+"原始问题" = "Original Question";
+"相关图片" = "Related Images";
+"延伸阅读" = "Further Reading";
+"参考论文" = "Reference Papers";
+"研究答案" = "Research Answer";
+"论文分析" = "Paper Analysis";
+
+// Settings
+"显示设置" = "Display Settings";
+"亮色模式" = "Light Mode";
+"深色模式" = "Dark Mode";
+"数据管理" = "Data Management";
+"重置所有对话" = "Reset All Conversations";
+"关于 知道AI" = "About Zap Know AI";
+"版本 1.0.0" = "Version 1.0.0";
+
+// App description
+"知道AI是一款智能研究助手，帮助用户获取学术论文分析、研究数据和相关图片资料，提供深入的科研问题解答。" = "Zap Know AI is a smart research assistant that helps users access academic paper analysis, research data, and related images, providing in-depth answers to research questions.";
+
+// Features
+"主要功能" = "Main Features";
+"智能搜索和分析学术论文" = "Smart Search and Analysis of Academic Papers";
+"提供多语言研究内容解答" = "Multilingual Research Content Answers";
+"相关图片和文献推荐" = "Related Images and Literature Recommendations";
+"对话历史保存和管理" = "Conversation History Management";
+
+// Developer info
+"开发者" = "Developer";
+"Zigao Wang" = "Zigao Wang";
+"研究员 & 开发者" = "Researcher & Developer";
+"设置" = "Settings";
+
+// Example questions
+"癌症治疗的最新研究进展是什么?" = "What are the latest research developments in cancer treatment?";
+"量子计算如何应用于密码学?" = "How is quantum computing applied to cryptography?";
+"机器学习在医疗诊断中的应用有哪些?" = "What are the applications of machine learning in medical diagnosis?";
+"全球变暖对海洋生态系统有什么影响?" = "What are the effects of global warming on marine ecosystems?"; 

@@ -43,7 +43,7 @@ struct ContentView: View {
     @State private var isPaperAnalysisExpanded = true
     
     private let searchBarHeight: CGFloat = 50
-    private let placeholderText = "Ask a question..."
+    private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
     // Date formatter
     private let dateFormatter: DateFormatter = {
@@ -52,6 +52,14 @@ struct ContentView: View {
         formatter.timeStyle = .short
         return formatter
     }()
+    
+    // Example questions
+    private let exampleQuestions = [
+        NSLocalizedString("癌症治疗的最新研究进展是什么?", comment: "Example question about cancer research"),
+        NSLocalizedString("量子计算如何应用于密码学?", comment: "Example question about quantum computing"),
+        NSLocalizedString("机器学习在医疗诊断中的应用有哪些?", comment: "Example question about machine learning"),
+        NSLocalizedString("全球变暖对海洋生态系统有什么影响?", comment: "Example question about global warming")
+    ]
     
     var body: some View {
         ZStack {
@@ -119,11 +127,11 @@ struct ContentView: View {
                             VStack(spacing: 0) {
                                 // Header area with improved design
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("知道 AI")
+                                    Text(NSLocalizedString("知道 AI", comment: "App name"))
                                         .font(.system(size: 24, weight: .bold, design: .rounded))
                                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                     
-                                    Text("你的研究伙伴")
+                                    Text(NSLocalizedString("你的研究伙伴", comment: "App subtitle"))
                                         .font(.system(size: 16, design: .rounded))
                                         .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
                                 }
@@ -144,7 +152,7 @@ struct ContentView: View {
                                             .font(.system(size: 18))
                                             .foregroundColor(.white)
                                         
-                                        Text("新对话")
+                                        Text(NSLocalizedString("新对话", comment: "New chat button text"))
                                             .font(.system(size: 16, weight: .medium, design: .rounded))
                                             .foregroundColor(.white)
                                         
@@ -177,7 +185,7 @@ struct ContentView: View {
                                         .font(.system(size: 16))
                                         .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                                     
-                                    Text("搜索对话")
+                                    Text(NSLocalizedString("搜索对话", comment: "Search conversations placeholder"))
                                         .font(.system(size: 15, design: .rounded))
                                         .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                                     
@@ -195,7 +203,7 @@ struct ContentView: View {
                                     .padding(.horizontal, 20)
                                 
                                 // Section title with improved styling
-                                Text("今天")
+                                Text(NSLocalizedString("今天", comment: "Today section header"))
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     .foregroundColor(isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -216,12 +224,12 @@ struct ContentView: View {
                                                 .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
                                         }
                                         
-                                        Text("暂无历史对话")
+                                        Text(NSLocalizedString("暂无历史对话", comment: "No history message"))
                                             .font(.system(size: 16, weight: .medium, design: .rounded))
                                             .foregroundColor(isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
                                             .multilineTextAlignment(.center)
                                         
-                                        Text("开始一个新对话来探索知识")
+                                        Text(NSLocalizedString("开始一个新对话来探索知识", comment: "Start new chat message"))
                                             .font(.system(size: 14, design: .rounded))
                                             .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
                                             .multilineTextAlignment(.center)
@@ -313,7 +321,7 @@ struct ContentView: View {
                                             .font(.system(size: 14, weight: .medium, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                         
-                                        Text("研究员")
+                                        Text(NSLocalizedString("研究员", comment: "Researcher role"))
                                             .font(.system(size: 12, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                     }
@@ -460,11 +468,11 @@ struct ContentView: View {
                             }
                         }
                         
-                        Text("知道 AI")
+                        Text(NSLocalizedString("知道 AI", comment: "App name"))
                             .font(.system(size: 32, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         
-                        Text("智能研究助手")
+                        Text(NSLocalizedString("智能研究助手", comment: "App description"))
                             .font(.system(size: 18, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.9))
                     }
@@ -476,7 +484,7 @@ struct ContentView: View {
                 
                 // Example questions in a cleaner design
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("试试以下问题")
+                    Text(NSLocalizedString("试试以下问题", comment: "Try these questions"))
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                         .padding(.horizontal, 20)
@@ -599,7 +607,7 @@ struct ContentView: View {
             // App title (shown when no conversation is selected)
             if selectedConversationId == nil {
                 HStack(spacing: 8) {
-                    Text("知道 AI")
+                    Text(NSLocalizedString("知道 AI", comment: "App name"))
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
                 }
@@ -724,7 +732,7 @@ struct ContentView: View {
                                 .font(.system(size: 18))
                                 .foregroundColor(Color(hex: "3B82F6"))
                                 
-                            Text("相关图片")
+                            Text(NSLocalizedString("相关图片", comment: "Related images"))
                                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                         }
@@ -880,7 +888,7 @@ struct ContentView: View {
                         .font(.system(size: 16))
                         .foregroundColor(Color(hex: "3B82F6"))
                         
-                    Text("相关论文")
+                    Text(NSLocalizedString("参考论文", comment: "Reference papers"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -928,7 +936,7 @@ struct ContentView: View {
                         .font(.system(size: 16))
                         .foregroundColor(Color(hex: "3B82F6"))
                         
-                    Text("延伸阅读")
+                    Text(NSLocalizedString("延伸阅读", comment: "Further reading"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -1020,7 +1028,7 @@ struct ContentView: View {
                             .foregroundColor(Color(hex: "3B82F6"))
                     }
                     
-                    Text("研究回答")
+                    Text(NSLocalizedString("原始问题", comment: "Original question"))
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -1184,14 +1192,6 @@ struct ContentView: View {
         generator.notificationOccurred(.success)
     }
     
-    // Example questions to display on the welcome screen
-    private var exampleQuestions: [String] = [
-        "癌症治疗的最新研究进展是什么？",
-        "量子计算如何应用于密码学？",
-        "机器学习在医疗诊断中的应用有哪些？",
-        "全球变暖对海洋生态系统有什么影响？"
-    ]
-    
     // Helper computed properties for improved stage tracking
     private var isPaperSearching: Bool {
         return service.currentStage == .paperRetrieval
@@ -1266,7 +1266,7 @@ struct ContentView: View {
                             .foregroundColor(Color(hex: "3B82F6"))
                     }
                     
-                    Text("论文分析")
+                    Text(NSLocalizedString("论文分析", comment: "Paper analysis"))
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -1329,7 +1329,7 @@ struct ContentView: View {
                         .foregroundColor(Color(hex: "3B82F6"))
                 }
                 
-                Text("研究答案")
+                Text(NSLocalizedString("研究答案", comment: "Research answer"))
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
@@ -1486,7 +1486,7 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         // Theme section
-                        settingsSection(title: "显示设置") {
+                        settingsSection(title: NSLocalizedString("显示设置", comment: "Display settings")) {
                             VStack(spacing: 0) {
                                 Button(action: {
                                     let generator = UIImpactFeedbackGenerator(style: .light)
@@ -1506,7 +1506,7 @@ struct SettingsView: View {
                                                     .fill(isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
                                             )
                                         
-                                        Text(isDarkMode ? "亮色模式" : "深色模式")
+                                        Text(NSLocalizedString(isDarkMode ? "亮色模式" : "深色模式", comment: "Theme mode"))
                                             .font(.system(size: 16, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white : .black)
                                         
@@ -1533,7 +1533,7 @@ struct SettingsView: View {
                         }
                         
                         // Data management section
-                        settingsSection(title: "数据管理") {
+                        settingsSection(title: NSLocalizedString("数据管理", comment: "Data management")) {
                             VStack(spacing: 0) {
                                 Button(action: {
                                     let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -1569,7 +1569,7 @@ struct SettingsView: View {
                                                     .fill(Color.red.opacity(0.1))
                                             )
                                         
-                                        Text("重置所有对话")
+                                        Text(NSLocalizedString("重置所有对话", comment: "Reset all conversations"))
                                             .font(.system(size: 16, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white : .black)
                                         
@@ -1596,7 +1596,7 @@ struct SettingsView: View {
                         }
                         
                         // About section with app info
-                        settingsSection(title: "关于 知道AI") {
+                        settingsSection(title: NSLocalizedString("关于 知道AI", comment: "About ZapKnowAI")) {
                             VStack(spacing: 24) {
                                 // App logo and basic info
                                 HStack(spacing: 20) {
@@ -1621,11 +1621,11 @@ struct SettingsView: View {
                                     }
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("知道 AI")
+                                        Text(NSLocalizedString("知道 AI", comment: "App name"))
                                             .font(.system(size: 22, weight: .bold, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                         
-                                        Text("版本 1.0.0")
+                                        Text(NSLocalizedString("版本 1.0.0", comment: "App version"))
                                             .font(.system(size: 16, design: .rounded))
                                             .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                                     }
@@ -1636,7 +1636,7 @@ struct SettingsView: View {
                                 .padding(.top, 16)
                                 
                                 // App description
-                                Text("知道AI是一款智能研究助手，帮助用户获取学术论文分析、研究数据和相关图片资料，提供深入的科研问题解答。")
+                                Text(NSLocalizedString("知道AI是一款智能研究助手，帮助用户获取学术论文分析、研究数据和相关图片资料，提供深入的科研问题解答。", comment: "App description"))
                                     .font(.system(size: 15, design: .rounded))
                                     .lineSpacing(4)
                                     .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
@@ -1644,14 +1644,14 @@ struct SettingsView: View {
                                 
                                 // Features list
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text("主要功能")
+                                    Text(NSLocalizedString("主要功能", comment: "Main features"))
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                     
-                                    featureRow(iconName: "magnifyingglass", text: "智能搜索和分析学术论文")
-                                    featureRow(iconName: "doc.text", text: "提供多语言研究内容解答")
-                                    featureRow(iconName: "photo.on.rectangle", text: "相关图片和文献推荐")
-                                    featureRow(iconName: "archivebox", text: "对话历史保存和管理")
+                                    featureRow(iconName: "magnifyingglass", text: NSLocalizedString("智能搜索和分析学术论文", comment: "Feature: Smart paper search and analysis"))
+                                    featureRow(iconName: "doc.text", text: NSLocalizedString("提供多语言研究内容解答", comment: "Feature: Multilingual research answers"))
+                                    featureRow(iconName: "photo.on.rectangle", text: NSLocalizedString("相关图片和文献推荐", comment: "Feature: Related images and literature"))
+                                    featureRow(iconName: "archivebox", text: NSLocalizedString("对话历史保存和管理", comment: "Feature: Conversation history"))
                                 }
                                 .padding(.horizontal, 16)
                                 
@@ -1661,7 +1661,7 @@ struct SettingsView: View {
                                 
                                 // Developer info
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Text("开发者")
+                                    Text(NSLocalizedString("开发者", comment: "Developer section"))
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                     
@@ -1685,11 +1685,11 @@ struct SettingsView: View {
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text("Zigao Wang")
+                                            Text(NSLocalizedString("Zigao Wang", comment: "Developer name"))
                                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                             
-                                            Text("研究员 & 开发者")
+                                            Text(NSLocalizedString("研究员 & 开发者", comment: "Developer role"))
                                                 .font(.system(size: 14, design: .rounded))
                                                 .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                                         }
@@ -1727,7 +1727,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("设置")
+                    Text(NSLocalizedString("设置", comment: "Settings"))
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : .black)
                 }

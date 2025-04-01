@@ -207,13 +207,13 @@ enum ProgressStage: String, CaseIterable {
     var displayText: String {
         switch self {
         case .evaluation:
-            return "正在评估问题范围"
+            return NSLocalizedString("正在评估问题范围", comment: "Progress stage: evaluating question scope")
         case .paperRetrieval:
-            return "正在搜索相关论文"
+            return NSLocalizedString("正在搜索相关论文", comment: "Progress stage: searching for papers")
         case .paperAnalysis:
-            return "正在分析论文内容"
+            return NSLocalizedString("正在分析论文内容", comment: "Progress stage: analyzing papers")
         case .answerGeneration:
-            return "正在生成最终答案"
+            return NSLocalizedString("正在生成最终答案", comment: "Progress stage: generating answer")
         }
     }
 }

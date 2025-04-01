@@ -120,11 +120,11 @@ struct ImagesGalleryView: View {
             ProgressView()
                 .scaleEffect(1.2)
             
-            Text("正在查找相关图片...")
+            Text(NSLocalizedString("正在查找相关图片...", comment: "Loading state for image search"))
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
             
-            Text("我们正在搜索与您的问题相关的图片")
+            Text(NSLocalizedString("我们正在搜索与您的问题相关的图片", comment: "Loading message for image search"))
                 .font(.system(size: 14, design: .rounded))
                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                 .multilineTextAlignment(.center)
@@ -165,7 +165,7 @@ struct ImagesGalleryView: View {
                             .font(.system(size: 12))
                             .foregroundColor(Color(hex: "8B5CF6"))
                         
-                        Text("AI 生成")
+                        Text(NSLocalizedString("AI 生成", comment: "AI Generated badge"))
                             .font(.system(size: 12, weight: .medium, design: .rounded))
                             .foregroundColor(Color(hex: "8B5CF6"))
                     }

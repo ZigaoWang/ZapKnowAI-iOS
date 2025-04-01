@@ -87,7 +87,7 @@ struct TypingIndicatorView: View {
 
 // Enhanced version with text label
 struct TypingIndicatorWithLabel: View {
-    var message: String = "正在生成回答"
+    var message: String = NSLocalizedString("正在生成回答", comment: "Typing indicator message")
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage("isDarkMode") private var isDarkMode = false
     

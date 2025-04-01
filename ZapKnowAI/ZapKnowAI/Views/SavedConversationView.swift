@@ -127,7 +127,7 @@ struct SavedConversationView: View {
                                 .font(.system(size: 20))
                                 .foregroundColor(Color(hex: "3B82F6"))
                             
-                            Text("研究回答")
+                            Text(NSLocalizedString("研究回答", comment: "Research Answer section title"))
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
@@ -144,7 +144,7 @@ struct SavedConversationView: View {
                                     Image(systemName: "doc.on.doc")
                                         .font(.system(size: 14))
                                     
-                                    Text("复制")
+                                    Text(NSLocalizedString("复制", comment: "Copy button text"))
                                         .font(.system(size: 14, weight: .medium, design: .rounded))
                                 }
                                 .padding(.horizontal, 12)
