@@ -36,6 +36,12 @@ struct ContentView: View {
     @State private var isImagesExpanded = false
     @State private var isArticlesExpanded = false
     
+    // Response content separation states
+    @State private var paperAnalysisContent = ""
+    @State private var synthesisContent = ""
+    @State private var isPaperAnalysisComplete = false
+    @State private var isPaperAnalysisExpanded = true
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = "Ask a question..."
     
@@ -686,7 +692,7 @@ struct ContentView: View {
         }
     }
     
-    // Modify the chat results view to collapse papers and articles by default but show images at the top
+    // Modify the chat results view to handle paper analysis and synthesis separately
     private var chatResultsView: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -761,12 +767,14 @@ struct ContentView: View {
                     collapsedSourcesSection
                 }
                 
-                // Answer section with improved visuals
-                if !service.accumulatedTokens.isEmpty || isGeneratingResponse {
-                    answerView
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                        .transition(.opacity)
+                // Paper Analysis section (collapsible, auto-collapses when complete)
+                if !paperAnalysisContent.isEmpty {
+                    paperAnalysisView
+                }
+                
+                // Synthesis (final answer) section
+                if !synthesisContent.isEmpty || (isGeneratingResponse && isPaperAnalysisComplete) {
+                    synthesisView
                 }
                 
                 Spacer().frame(height: 80) // Bottom padding for input field
@@ -779,8 +787,13 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.3), value: isSourcesExpanded)
             .animation(.easeInOut(duration: 0.3), value: isPapersExpanded)
             .animation(.easeInOut(duration: 0.3), value: isArticlesExpanded)
+            .animation(.easeInOut(duration: 0.3), value: isPaperAnalysisExpanded)
+            .animation(.easeInOut(duration: 0.3), value: isPaperAnalysisComplete)
         }
         .scrollDismissesKeyboard(.immediately)
+        .onChange(of: service.accumulatedTokens) { _, newText in
+            processAccumulatedTokens(newText)
+        }
     }
     
     // Collapsed sources section (papers and articles)
@@ -987,83 +1000,91 @@ struct ContentView: View {
     
     // MARK: - Answer View
     private var answerView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Answer header with enhanced design
-            HStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "3B82F6").opacity(0.1))
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: "text.bubble.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(Color(hex: "3B82F6"))
-                }
-                
-                Text("研究回答")
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                
-                Spacer()
-                
-                // Show generating status when generating answer
-                if isGeneratingResponse && service.accumulatedTokens.isEmpty {
-                    TypingIndicator()
-                        .frame(width: 40, height: 20)
-                }
-                
-                // Copy button with enhanced design
-                if !service.accumulatedTokens.isEmpty {
-                    Button(action: {
-                        UIPasteboard.general.string = service.accumulatedTokens
-                        // Add haptic feedback
-                        let generator = UINotificationFeedbackGenerator()
-                        generator.notificationOccurred(.success)
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "doc.on.doc")
-                                .font(.system(size: 14))
-                            
-                            Text("复制")
-                                .font(.system(size: 14, weight: .medium, design: .rounded))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                        )
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+        // If we have separated content, use synthesisView
+        if !synthesisContent.isEmpty {
+            return AnyView(synthesisView)
+        }
+        
+        // Otherwise use the combined view
+        return AnyView(
+            VStack(alignment: .leading, spacing: 16) {
+                // Answer header with enhanced design
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "3B82F6").opacity(0.1))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "text.bubble.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(Color(hex: "3B82F6"))
                     }
-                    .buttonStyle(ScaleButtonStyle())
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            
-            // Answer content with enhanced markdown styling
-            VStack(alignment: .leading, spacing: 0) {
-                // Markdown content with improved styling
-                MarkdownView_Native(markdown: service.accumulatedTokens)
-                    .padding(24)
-                    .environment(\.colorScheme, isDarkMode ? .dark : .light)
-                
-                // Typing indicator - only show when actively generating the answer
-                if isTyping && isGeneratingResponse {
-                    HStack {
+                    
+                    Text("研究回答")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Spacer()
+                    
+                    // Show generating status when generating answer
+                    if isGeneratingResponse && service.accumulatedTokens.isEmpty {
                         TypingIndicator()
                             .frame(width: 40, height: 20)
-                            .padding(.vertical, 8)
-                        Spacer()
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                    
+                    // Copy button with enhanced design
+                    if !service.accumulatedTokens.isEmpty {
+                        Button(action: {
+                            UIPasteboard.general.string = service.accumulatedTokens
+                            // Add haptic feedback
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(.success)
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "doc.on.doc")
+                                    .font(.system(size: 14))
+                                
+                                Text("复制")
+                                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                            )
+                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                
+                // Answer content with enhanced markdown styling
+                VStack(alignment: .leading, spacing: 0) {
+                    // Markdown content with improved styling
+                    MarkdownView_Native(markdown: service.accumulatedTokens)
+                        .padding(24)
+                        .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                    
+                    // Typing indicator - only show when actively generating the answer
+                    if isTyping && isGeneratingResponse {
+                        HStack {
+                            TypingIndicator()
+                                .frame(width: 40, height: 20)
+                                .padding(.vertical, 8)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 16)
+                    }
+                }
+                .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                .cornerRadius(20)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
             }
-            .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-            .cornerRadius(20)
-            .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
-        }
+        )
     }
     
     // MARK: - Helper Functions
@@ -1071,6 +1092,12 @@ struct ContentView: View {
     // Submit a new query
     private func submitQuery() {
         guard !query.isEmpty else { return }
+        
+        // Reset split content
+        paperAnalysisContent = ""
+        synthesisContent = ""
+        isPaperAnalysisComplete = false
+        isPaperAnalysisExpanded = true
         
         // Hide keyboard when submitting
         isTextFieldFocused = false
@@ -1094,6 +1121,12 @@ struct ContentView: View {
             imageUrls = []
             articles = []
             selectedConversationId = nil
+            
+            // Reset split content
+            paperAnalysisContent = ""
+            synthesisContent = ""
+            isPaperAnalysisComplete = false
+            isPaperAnalysisExpanded = true
         }
     }
     
@@ -1137,6 +1170,12 @@ struct ContentView: View {
         articles = []
         selectedConversationId = nil
         
+        // Reset split content
+        paperAnalysisContent = ""
+        synthesisContent = ""
+        isPaperAnalysisComplete = false
+        isPaperAnalysisExpanded = true
+        
         // Clear saved conversations
         storageService.deleteAllConversations()
         
@@ -1177,6 +1216,186 @@ struct ContentView: View {
             let endIndex = query.index(query.startIndex, offsetBy: maxLength)
             return String(query[..<endIndex]) + "..."
         }
+    }
+    
+    // Process the accumulated tokens to separate paper analysis from synthesis
+    private func processAccumulatedTokens(_ text: String) {
+        // Check if the text contains a synthesis marker
+        if let synthesisRange = text.range(of: "SYNTHESIS:", options: .caseInsensitive) {
+            // Extract paper analysis (everything before SYNTHESIS)
+            let paperAnalysisEnd = synthesisRange.lowerBound
+            paperAnalysisContent = String(text[..<paperAnalysisEnd])
+            
+            // Extract synthesis (everything after SYNTHESIS)
+            let synthesisStart = text.index(after: synthesisRange.upperBound)
+            if synthesisStart < text.endIndex {
+                synthesisContent = String(text[synthesisStart...])
+            }
+            
+            // Mark paper analysis as complete
+            if !isPaperAnalysisComplete {
+                isPaperAnalysisComplete = true
+                // Auto-collapse paper analysis once complete
+                withAnimation {
+                    isPaperAnalysisExpanded = false
+                }
+            }
+        } else {
+            // No synthesis marker yet, all content is paper analysis
+            paperAnalysisContent = text
+        }
+    }
+    
+    // Paper Analysis View (collapsible)
+    private var paperAnalysisView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with collapse/expand button
+            Button(action: {
+                withAnimation {
+                    isPaperAnalysisExpanded.toggle()
+                }
+            }) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "3B82F6").opacity(0.1))
+                            .frame(width: 36, height: 36)
+                        
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 18))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                    }
+                    
+                    Text("论文分析")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Spacer()
+                    
+                    if isGeneratingResponse && !isPaperAnalysisComplete {
+                        TypingIndicator()
+                            .frame(width: 40, height: 20)
+                    }
+                    
+                    Image(systemName: isPaperAnalysisExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .padding(.leading, 4)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            if isPaperAnalysisExpanded {
+                // Content
+                VStack(alignment: .leading, spacing: 0) {
+                    MarkdownView_Native(markdown: paperAnalysisContent)
+                        .padding(24)
+                        .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                    
+                    // Typing indicator - only show when actively generating paper analysis
+                    if isTyping && isGeneratingResponse && !isPaperAnalysisComplete {
+                        HStack {
+                            TypingIndicator()
+                                .frame(width: 40, height: 20)
+                                .padding(.vertical, 8)
+                            Spacer()
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 16)
+                    }
+                }
+                .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                .cornerRadius(20)
+                .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+    
+    // Synthesis View (final answer)
+    private var synthesisView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Answer header with enhanced design
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "3B82F6").opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: "text.bubble.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                }
+                
+                Text("研究答案")
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                
+                Spacer()
+                
+                // Show generating status when generating answer
+                if isGeneratingResponse && isPaperAnalysisComplete && synthesisContent.isEmpty {
+                    TypingIndicator()
+                        .frame(width: 40, height: 20)
+                }
+                
+                // Copy button with enhanced design
+                if !synthesisContent.isEmpty {
+                    Button(action: {
+                        UIPasteboard.general.string = synthesisContent
+                        // Add haptic feedback
+                        let generator = UINotificationFeedbackGenerator()
+                        generator.notificationOccurred(.success)
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "doc.on.doc")
+                                .font(.system(size: 14))
+                            
+                            Text("复制")
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                        )
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    }
+                    .buttonStyle(ScaleButtonStyle())
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            
+            // Answer content with enhanced markdown styling
+            VStack(alignment: .leading, spacing: 0) {
+                // Markdown content with improved styling
+                MarkdownView_Native(markdown: synthesisContent)
+                    .padding(24)
+                    .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                
+                // Typing indicator - only show when actively generating synthesis
+                if isTyping && isGeneratingResponse && isPaperAnalysisComplete && synthesisContent.isEmpty {
+                    HStack {
+                        TypingIndicator()
+                            .frame(width: 40, height: 20)
+                            .padding(.vertical, 8)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+                }
+            }
+            .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+            .cornerRadius(20)
+            .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+        .transition(.opacity)
     }
 }
 
