@@ -30,6 +30,12 @@ struct ContentView: View {
     // Animation states
     @State private var animateGradient = false
     
+    // Collapse/expand states
+    @State private var isSourcesExpanded = false
+    @State private var isPapersExpanded = false
+    @State private var isImagesExpanded = false
+    @State private var isArticlesExpanded = false
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = "Ask a question..."
     
@@ -680,7 +686,7 @@ struct ContentView: View {
         }
     }
     
-    // Enhanced chat results view with modern design
+    // Modify the chat results view to collapse papers and articles by default but show images at the top
     private var chatResultsView: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -704,37 +710,11 @@ struct ContentView: View {
                     .transition(.opacity)
                 }
                 
-                // Papers list with improved spacing and shadows
-                if (!service.papers.isEmpty && isPaperRelevantStage) || 
-                   (service.isStreaming && isPaperSearching) {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "3B82F6"))
-                                
-                            Text("相关论文")
-                                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                        }
-                        .padding(.horizontal, 16)
-                        
-                        PapersListView(
-                            papers: service.papers,
-                            onPaperTap: { paper in
-                                // Handle paper tap
-                            }
-                        )
-                    }
-                    .padding(.horizontal, 16)
-                    .transition(.opacity)
-                }
-                
-                // Image results with visual enhancements
+                // Images display at the top (always visible)
                 if !imageUrls.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Image(systemName: "photo.on.rectangle.angled")
+                            Image(systemName: "photo.on.rectangle")
                                 .font(.system(size: 18))
                                 .foregroundColor(Color(hex: "3B82F6"))
                                 
@@ -775,27 +755,10 @@ struct ContentView: View {
                     .padding(.vertical, 8)
                 }
                 
-                // Articles section with card enhancements
-                if !articles.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "book.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "3B82F6"))
-                                
-                            Text("延伸阅读")
-                                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                        }
-                        .padding(.horizontal, 16)
-                        
-                        ForEach(articles) { article in
-                            ArticleCardView(article: article, isDarkMode: isDarkMode)
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 8)
-                        }
-                    }
-                    .padding(.vertical, 8)
+                // Sources section with papers and articles (collapsed by default)
+                if (!service.papers.isEmpty || !articles.isEmpty) && 
+                   (!service.isStreaming || service.accumulatedTokens.isNotEmpty) {
+                    collapsedSourcesSection
                 }
                 
                 // Answer section with improved visuals
@@ -813,8 +776,178 @@ struct ContentView: View {
             .animation(.easeInOut(duration: 0.3), value: service.accumulatedTokens)
             .animation(.easeInOut(duration: 0.3), value: imageUrls.count)
             .animation(.easeInOut(duration: 0.3), value: articles.count)
+            .animation(.easeInOut(duration: 0.3), value: isSourcesExpanded)
+            .animation(.easeInOut(duration: 0.3), value: isPapersExpanded)
+            .animation(.easeInOut(duration: 0.3), value: isArticlesExpanded)
         }
         .scrollDismissesKeyboard(.immediately)
+    }
+    
+    // Collapsed sources section (papers and articles)
+    private var collapsedSourcesSection: some View {
+        VStack(spacing: 12) {
+            // Sources Header
+            Button(action: {
+                withAnimation {
+                    isSourcesExpanded.toggle()
+                    // If sources is collapsed, collapse all subsections
+                    if !isSourcesExpanded {
+                        isPapersExpanded = false
+                        isArticlesExpanded = false
+                    }
+                }
+            }) {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                        
+                    Text("查看论文和延伸阅读")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Spacer()
+                    
+                    // Show count of papers and articles
+                    Text("\(service.papers.count + articles.count)")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                        )
+                    
+                    Image(systemName: isSourcesExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .padding(.leading, 4)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+                )
+                .padding(.horizontal, 16)
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            // Expanded Sources Content
+            if isSourcesExpanded {
+                VStack(spacing: 16) {
+                    // Papers section
+                    if !service.papers.isEmpty && isPaperRelevantStage {
+                        papersSection
+                    }
+                    
+                    // Articles section
+                    if !articles.isEmpty {
+                        articlesSection
+                    }
+                }
+                .padding(.horizontal, 16)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+    
+    // Papers section (collapsible)
+    private var papersSection: some View {
+        VStack(spacing: 8) {
+            Button(action: {
+                withAnimation {
+                    isPapersExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                        
+                    Text("相关论文")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Spacer()
+                    
+                    Text("\(service.papers.count)")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                    
+                    Image(systemName: isPapersExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .padding(.leading, 4)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
+                )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            if isPapersExpanded {
+                PapersListView(
+                    papers: service.papers,
+                    onPaperTap: { paper in
+                        // Handle paper tap
+                    }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+    
+    // Articles section (collapsible)
+    private var articlesSection: some View {
+        VStack(spacing: 8) {
+            Button(action: {
+                withAnimation {
+                    isArticlesExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: "book")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "3B82F6"))
+                        
+                    Text("延伸阅读")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    
+                    Spacer()
+                    
+                    Text("\(articles.count)")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                    
+                    Image(systemName: isArticlesExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .padding(.leading, 4)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
+                )
+            }
+            .buttonStyle(ScaleButtonStyle())
+            
+            if isArticlesExpanded {
+                VStack(spacing: 8) {
+                    ForEach(articles) { article in
+                        ArticleCardView(article: article, isDarkMode: isDarkMode)
+                            .padding(.bottom, 8)
+                    }
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
     }
     
     // MARK: - Status Message View
@@ -1424,6 +1557,13 @@ struct SettingsView: View {
             
             Spacer()
         }
+    }
+}
+
+// Add a helper extension to check if a string is empty
+extension String {
+    var isNotEmpty: Bool {
+        return !self.isEmpty
     }
 }
 
