@@ -1,14 +1,14 @@
 //
-//  ZhiDaoAIApp.swift
-//  ZhiDaoAI
+//  ZapKnowAIApp.swift
+//  ZapKnowAI
 //
-//  Created by Zigao Wang on 3/26/25.
+//  Created by Pacer Club on 3/26/24.
 //
 
 import SwiftUI
 
 @main
-struct ZhiDaoAIApp: App {
+struct ZapKnowAIApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
