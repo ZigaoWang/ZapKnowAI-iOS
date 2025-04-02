@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 
 struct ContentView: View {
+    @ObservedObject var userSettings: UserSettings
     @StateObject private var service = ZhiDaoService()
     @StateObject private var storageService = ConversationStorageService()
     @State private var query = ""
@@ -209,7 +210,7 @@ struct ContentView: View {
                                 // Section title with improved styling
                                 Text(NSLocalizedString("今天", comment: "Today section header"))
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal, 20)
                                     .padding(.bottom, 8)
@@ -307,30 +308,32 @@ struct ContentView: View {
                                 HStack(spacing: 12) {
                                     // User avatar with gradient
                                     ZStack {
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                Color(hex: "6366F1"),
-                                                Color(hex: "8B5CF6")
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                        .clipShape(Circle())
-                                        .frame(width: 42, height: 42)
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color(hex: "6366F1"),
+                                                        Color(hex: "8B5CF6")
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 48, height: 48)
                                         
-                                        Text("ZW")
-                                            .font(.system(size: 16, weight: .medium))
+                                        Text(userSettings.userName.isEmpty ? "?" : String(userSettings.userName.prefix(1).uppercased()))
+                                            .font(.system(size: 20, weight: .bold))
                                             .foregroundColor(.white)
                                     }
                                     
                                     // User name and role
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("Zigao Wang")
-                                            .font(.system(size: 14, weight: .medium))
+                                        Text(userSettings.userName.isEmpty ? NSLocalizedString("游客", comment: "Guest user") : userSettings.userName)
+                                            .font(.system(size: 17, weight: .medium))
                                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                                         
                                         Text(NSLocalizedString("研究员", comment: "Researcher role"))
-                                            .font(.system(size: 12))
+                                            .font(.system(size: 14))
                                             .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                     }
                                     
@@ -1472,7 +1475,7 @@ struct TypingIndicator: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(userSettings: UserSettings())
     }
 }
 
@@ -1716,7 +1719,7 @@ struct SettingsView: View {
                                 .padding(.horizontal, 16)
                                 
                                 // Copyright
-                                Text("© 2025 Zigao Wang. All rights reserved.")
+                                Text(" 2025 Zigao Wang. All rights reserved.")
                                     .font(.system(size: 14))
                                     .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                     .frame(maxWidth: .infinity, alignment: .center)
@@ -1801,4 +1804,3 @@ extension String {
         return !self.isEmpty
     }
 }
-
