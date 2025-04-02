@@ -19,7 +19,7 @@ struct SettingsPanel: View {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
                 HStack {
-                    Text("设置")
+                    Text(NSLocalizedString("设置", comment: "Settings title"))
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -45,7 +45,7 @@ struct SettingsPanel: View {
                 
                 // About section
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("关于")
+                    Text(NSLocalizedString("关于", comment: "About section title"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
@@ -71,18 +71,18 @@ struct SettingsPanel: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("知道 AI")
+                            Text(NSLocalizedString("知道 AI", comment: "App name"))
                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
-                            Text("版本 1.0.0")
+                            Text(NSLocalizedString("版本 1.0.0", comment: "Version number"))
                                 .font(.system(size: 14, design: .rounded))
                                 .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
                         }
                     }
                     .padding(.vertical, 8)
                     
-                    Text("由 Zigao Wang 开发")
+                    Text(NSLocalizedString("由 Zigao Wang 开发", comment: "Developer credit"))
                         .font(.system(size: 14))
                         .foregroundColor(isDarkMode ? Color(hex: "D1D5DB") : Color(hex: "6B7280"))
                 }
@@ -90,20 +90,20 @@ struct SettingsPanel: View {
                 
                 // Links section
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("链接")
+                    Text(NSLocalizedString("链接", comment: "Links section title"))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     LinkButton(
                         icon: "link",
-                        title: "GitHub 主页",
+                        title: NSLocalizedString("GitHub 主页", comment: "GitHub profile link"),
                         url: "https://github.com/zigaowang",
                         isDarkMode: isDarkMode
                     )
                     
                     LinkButton(
                         icon: "envelope",
-                        title: "联系开发者",
+                        title: NSLocalizedString("联系开发者", comment: "Contact developer link"),
                         url: "mailto:info@example.com",
                         isDarkMode: isDarkMode
                     )
@@ -112,7 +112,7 @@ struct SettingsPanel: View {
                 Spacer()
                 
                 // Footer text
-                Text("© 2025 知道 AI. 保留所有权利")
+                Text(NSLocalizedString("© 2025 知道 AI. 保留所有权利", comment: "Copyright notice"))
                     .font(.system(size: 12))
                     .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
                     .padding(.top, 16)

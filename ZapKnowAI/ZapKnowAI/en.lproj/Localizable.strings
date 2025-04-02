@@ -31,6 +31,7 @@
 "暂无历史对话" = "No Conversation History";
 "开始一个新对话来探索知识" = "Start a new conversation to explore knowledge";
 "研究员" = "Researcher";
+"返回" = "Back";
 
 // Content sections
 "试试以下问题" = "Try These Questions";
@@ -70,4 +71,56 @@
 "癌症治疗的最新研究进展是什么?" = "What are the latest research developments in cancer treatment?";
 "量子计算如何应用于密码学?" = "How is quantum computing applied to cryptography?";
 "机器学习在医疗诊断中的应用有哪些?" = "What are the applications of machine learning in medical diagnosis?";
-"全球变暖对海洋生态系统有什么影响?" = "What are the effects of global warming on marine ecosystems?"; 
+"全球变暖对海洋生态系统有什么影响?" = "What are the effects of global warming on marine ecosystems?";
+
+// Progress stage descriptions
+"分析问题并确定研究方向" = "Analyzing question and determining research direction";
+"搜索和筛选相关学术论文" = "Searching and filtering relevant academic papers";
+"深入分析论文内容和关键发现" = "Analyzing paper content and key findings";
+"综合研究结果生成全面答案" = "Generating comprehensive answer from research results";
+
+// Status labels
+"完成" = "Completed";
+"进行中" = "In progress";
+
+// Paper list view
+"相关论文" = "Related Papers";
+"%d篇论文" = "%d Papers";
+"← 滑动查看更多论文" = "← Swipe to view more papers";
+"正在查找相关论文..." = "Searching for relevant papers...";
+"我们正在搜索与您的问题相关的论文" = "We are searching for papers related to your question";
+
+// Paper card view
+"摘要" = "Abstract";
+"原文链接" = "Original Link";
+"查看论文和延伸阅读" = "View Papers and Related Reading";
+"在浏览器中打开" = "Open in Browser";
+
+// Additional translations for SettingsPanel.swift
+"关于" = "About";
+"由 Zigao Wang 开发" = "Developed by Zigao Wang";
+"链接" = "Links";
+"GitHub 主页" = "GitHub Profile";
+"联系开发者" = "Contact Developer";
+
+// Additional strings from ContentView.swift that need translation
+"正在搜索相关学术论文..." = "Searching for relevant academic papers...";
+"简化的空状态视图" = "Simplified empty state view";
+"简单的加载指示器" = "Simple loading indicator";
+"正在分析论文" = "Analyzing papers";
+"© 2025 知道 AI. 保留所有权利" = "© 2025 Zap Know AI. All rights reserved";
+
+// Status messages from ZhiDaoService
+"连接到服务器，正在处理您的问题..." = "Connecting to server, processing your question...";
+"连接已建立" = "Connection established";
+"找到 %d 篇论文" = "Found %d papers";
+"找到 %d 张相关图片" = "Found %d related images";
+"开始流式生成回答" = "Starting to generate response";
+"响应完成" = "Response complete";
+"错误: %@" = "Error: %@";
+"Connection error: " = "Connection error: ";
+"Connection closed unexpectedly" = "Connection closed unexpectedly";
+"解析响应数据时出错" = "Error parsing response data";
+"Processing" = "Processing";
+"Processing substage: " = "Processing substage: ";
+"Chunk complete" = "Chunk complete"; 

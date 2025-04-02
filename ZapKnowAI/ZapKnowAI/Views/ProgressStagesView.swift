@@ -98,7 +98,7 @@ struct StageRow: View {
             // Stage status indicator
             if isCompleted {
                 HStack(spacing: 4) {
-                    Text("完成")
+                    Text(NSLocalizedString("完成", comment: "Completed status label"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.green)
                     
@@ -114,7 +114,7 @@ struct StageRow: View {
                 )
             } else if isActive {
                 HStack(spacing: 4) {
-                    Text("进行中")
+                    Text(NSLocalizedString("进行中", comment: "In progress status label"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Color(hex: "3B82F6"))
                     
@@ -164,13 +164,13 @@ struct StageRow: View {
     private var stageDescription: String {
         switch stage {
         case .evaluation:
-            return "分析问题并确定研究方向"
+            return NSLocalizedString("分析问题并确定研究方向", comment: "Stage description: analyzing question and determining research direction")
         case .paperRetrieval:
-            return "搜索和筛选相关学术论文"
+            return NSLocalizedString("搜索和筛选相关学术论文", comment: "Stage description: searching and filtering relevant academic papers")
         case .paperAnalysis:
-            return "深入分析论文内容和关键发现"
+            return NSLocalizedString("深入分析论文内容和关键发现", comment: "Stage description: analyzing paper content and key findings")
         case .answerGeneration:
-            return "综合研究结果生成全面答案"
+            return NSLocalizedString("综合研究结果生成全面答案", comment: "Stage description: generating comprehensive answer from research results")
         }
     }
 }

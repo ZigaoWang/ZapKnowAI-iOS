@@ -15,20 +15,20 @@ struct PapersListView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // 简化的标题栏
+            // Header bar
             HStack(spacing: 12) {
                 Image(systemName: "doc.text.magnifyingglass")
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(Color(hex: "3B82F6"))
                 
-                Text("相关论文")
+                Text(NSLocalizedString("相关论文", comment: "Related papers section title"))
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
                 Spacer()
                 
-                // 简化的论文数量角标
-                Text("\(papers.count)篇论文")
+                // Paper count badge
+                Text(String(format: NSLocalizedString("%d篇论文", comment: "Paper count label"), papers.count))
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
                     .padding(.horizontal, 12)
@@ -41,12 +41,12 @@ struct PapersListView: View {
             .padding(.horizontal, 20)
             .opacity(animatePapers ? 1 : 0)
             
-            // 论文列表
+            // Paper list
             if papers.isEmpty {
                 emptyStateView
             } else {
                 VStack(alignment: .leading, spacing: 16) {
-                    // 横向滚动视图
+                    // Horizontal scrolling view
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
                             ForEach(Array(papers.enumerated()), id: \.element.id) { index, paper in
@@ -81,9 +81,9 @@ struct PapersListView: View {
                         .padding(.vertical, 8)
                     }
                     
-                    // 简化的提示文本
+                    // Hint text
                     if papers.count > 1 {
-                        Text("← 滑动查看更多论文")
+                        Text(NSLocalizedString("← 滑动查看更多论文", comment: "Swipe to view more papers hint"))
                             .font(.system(size: 14, design: .rounded))
                             .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             .padding(.leading, 20)
@@ -107,7 +107,7 @@ struct PapersListView: View {
             }
         }
         .onChange(of: papers.count) { _, _ in
-            // 简单地重置和开始动画
+            // Reset and start animation
             animatePapers = false
             withAnimation(.easeIn(duration: 0.3)) {
                 animatePapers = true
@@ -115,18 +115,18 @@ struct PapersListView: View {
         }
     }
     
-    // 简化的空状态视图
+    // Empty state view
     private var emptyStateView: some View {
         VStack(spacing: 16) {
-            // 简单的加载指示器
+            // Loading indicator
             ProgressView()
                 .scaleEffect(1.2)
             
-            Text("正在查找相关论文...")
+            Text(NSLocalizedString("正在查找相关论文...", comment: "Loading state for paper search"))
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
             
-            Text("我们正在搜索与您的问题相关的论文")
+            Text(NSLocalizedString("我们正在搜索与您的问题相关的论文", comment: "Loading message for paper search"))
                 .font(.system(size: 14, design: .rounded))
                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                 .multilineTextAlignment(.center)
@@ -138,7 +138,7 @@ struct PapersListView: View {
     }
 }
 
-// 简化的论文卡片视图
+// Paper card view
 struct PaperCardView: View {
     var paper: Paper
     var index: Int
@@ -148,11 +148,11 @@ struct PaperCardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 论文头部
+            // Paper header
             VStack(alignment: .leading, spacing: 12) {
-                // 论文索引和标题
+                // Paper index and title
                 HStack(alignment: .top, spacing: 12) {
-                    // 论文索引
+                    // Paper index
                     Text("\(index + 1)")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
@@ -160,13 +160,13 @@ struct PaperCardView: View {
                         .background(Circle().fill(Color(hex: "3B82F6")))
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        // 标题
+                        // Title
                         Text(paper.title)
                             .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             .lineLimit(isExpanded ? 4 : 2)
                         
-                        // 作者和年份
+                        // Authors and year
                         HStack(spacing: 6) {
                             Text(paper.authors)
                                 .font(.system(size: 14, design: .rounded))
@@ -182,14 +182,14 @@ struct PaperCardView: View {
                                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                         }
                         
-                        // 来源标签
+                        // Source label
                         if let source = paper.source, !source.isEmpty {
                             EnhancedSourceBadge(source: source, isDarkMode: isDarkMode)
                         }
                     }
                 }
                 
-                // 展开/折叠指示器
+                // Expand/collapse indicator
                 HStack {
                     Spacer()
                     
@@ -205,13 +205,13 @@ struct PaperCardView: View {
             }
             .padding(16)
             
-            // 展开时的论文详情
+            // Paper details when expanded
             if isExpanded {
                 Divider()
                     .background(isDarkMode ? Color(hex: "3A3A3A") : Color(hex: "E5E7EB"))
                 
                 VStack(alignment: .leading, spacing: 16) {
-                    // 摘要
+                    // Abstract
                     if let abstract = paper.abstract, !abstract.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             HStack(spacing: 6) {
@@ -219,7 +219,7 @@ struct PaperCardView: View {
                                     .font(.system(size: 12))
                                     .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                                 
-                                Text("摘要")
+                                Text(NSLocalizedString("摘要", comment: "Abstract section title"))
                                     .font(.system(size: 14, weight: .medium, design: .rounded))
                                     .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             }
@@ -244,7 +244,7 @@ struct PaperCardView: View {
                                     .font(.system(size: 12))
                                     .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                                 
-                                Text("原文链接")
+                                Text(NSLocalizedString("原文链接", comment: "Original link section title"))
                                     .font(.system(size: 14, weight: .medium, design: .rounded))
                                     .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             }
@@ -254,7 +254,7 @@ struct PaperCardView: View {
                                     UIApplication.shared.open(validURL)
                                 } label: {
                                     HStack {
-                                        Text("在浏览器中打开")
+                                        Text(NSLocalizedString("在浏览器中打开", comment: "Open in browser button"))
                                             .font(.system(size: 14, weight: .medium, design: .rounded))
                                         
                                         Image(systemName: "arrow.up.right")
@@ -293,7 +293,7 @@ struct PaperCardView: View {
                 .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.08), 
                         radius: 8, x: 0, y: 2)
         )
-        // 仅为选中的论文添加简单的选中指示器
+        // Simple selected indicator for selected paper
         .overlay(
             isSelected ?
                 Circle()
@@ -311,7 +311,7 @@ struct PaperCardView: View {
     }
 }
 
-// 简化的来源标签
+// Enhanced source label
 struct EnhancedSourceBadge: View {
     var source: String
     var isDarkMode: Bool

@@ -86,7 +86,7 @@
 				};
 			};
 			buildConfigurationList = A24C85552D93EAEA00940494 /* Build configuration list for PBXProject "ZapKnowAI" */;
-			developmentRegion = "en";
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,

@@ -15,7 +15,7 @@ struct SavedConversationView: View {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .medium))
                             
-                            Text("返回")
+                            Text(NSLocalizedString("返回", comment: "Back button text"))
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                         }
                         .foregroundColor(Color(hex: "3B82F6"))
@@ -31,7 +31,7 @@ struct SavedConversationView: View {
                 VStack(spacing: 16) {
                     // Query section
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("原始问题")
+                        Text(NSLocalizedString("原始问题", comment: "Original question section title"))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                         
@@ -55,7 +55,7 @@ struct SavedConversationView: View {
                     // Image results
                     if !conversation.imageUrls.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("相关图片")
+                            Text(NSLocalizedString("相关图片", comment: "Related images section title"))
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
@@ -83,7 +83,7 @@ struct SavedConversationView: View {
                     // Articles section
                     if !conversation.articles.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("延伸阅读")
+                            Text(NSLocalizedString("延伸阅读", comment: "Further reading section title"))
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
@@ -103,7 +103,7 @@ struct SavedConversationView: View {
                     // Papers section
                     if !conversation.papers.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("参考论文")
+                            Text(NSLocalizedString("参考论文", comment: "Reference papers section title"))
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             

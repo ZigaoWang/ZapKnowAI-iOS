@@ -45,7 +45,7 @@ class ZhiDaoService: ObservableObject {
         request.timeoutInterval = 300 // 5 minutes
         
         isStreaming = true
-        statusMessage = "连接到服务器，正在处理您的问题..."
+        statusMessage = NSLocalizedString("连接到服务器，正在处理您的问题...", comment: "Status: Connecting to server and processing question")
         
         // We'll use a custom URLSession delegate below instead
         _ = urlSession.dataTask(with: request)
@@ -82,10 +82,10 @@ class ZhiDaoService: ObservableObject {
             
             DispatchQueue.main.async {
                 if let error = error {
-                    service.setError("Connection error: \(error.localizedDescription)")
+                    service.setError(NSLocalizedString("Connection error: ", comment: "Error prefix") + error.localizedDescription)
                 } else if !service.isComplete {
                     // Only set error if we're not already complete
-                    service.setError("Connection closed unexpectedly")
+                    service.setError(NSLocalizedString("Connection closed unexpectedly", comment: "Connection error message"))
                 }
                 service.isStreaming = false
             }
@@ -141,7 +141,7 @@ class ZhiDaoService: ObservableObject {
             handleEvent(event)
         } catch {
             print("Error parsing event: \(error)")
-            setError("解析响应数据时出错")
+            setError(NSLocalizedString("解析响应数据时出错", comment: "Error parsing response data"))
         }
     }
     
@@ -151,7 +151,7 @@ class ZhiDaoService: ObservableObject {
         switch event.status {
         case "connected":
             isConnected = true
-            statusMessage = event.message ?? "连接已建立"
+            statusMessage = event.message ?? NSLocalizedString("连接已建立", comment: "Status: Connection established")
             
         case "stage_update":
             guard let stageName = event.stage else { return }
@@ -169,12 +169,12 @@ class ZhiDaoService: ObservableObject {
                     self.currentStage = stage
                 }
             }
-            statusMessage = event.message ?? "Processing \(stageName)"
+            statusMessage = event.message ?? NSLocalizedString("Processing", comment: "Status: Processing") + " " + stageName
             
         case "substage_update":
             guard let substage = event.stage else { return }
             print("Substage update: \(substage)")
-            statusMessage = event.message ?? "Processing substage: \(substage)"
+            statusMessage = event.message ?? NSLocalizedString("Processing substage: ", comment: "Status: Processing substage") + substage
             
             if substage == "evaluation_complete" {
                 canAnswer = event.canAnswer
@@ -208,7 +208,7 @@ class ZhiDaoService: ObservableObject {
                 print("Found \(foundPapers.count) papers")
                 updatePapers(foundPapers)
             }
-            statusMessage = event.message ?? "找到 \(event.count ?? 0) 篇论文"
+            statusMessage = event.message ?? String(format: NSLocalizedString("找到 %d 篇论文", comment: "Status: Found n papers"), event.count ?? 0)
             
         case "images_found":
             if let foundImages = event.images {
@@ -216,11 +216,11 @@ class ZhiDaoService: ObservableObject {
                 updateImages(foundImages)
                 hasImages = true
             }
-            statusMessage = event.message ?? "找到 \(event.count ?? 0) 张相关图片"
+            statusMessage = event.message ?? String(format: NSLocalizedString("找到 %d 张相关图片", comment: "Status: Found n related images"), event.count ?? 0)
             
         case "streaming":
             // A streaming phase is starting (e.g., paper analysis or answer generation)
-            statusMessage = event.message ?? "开始流式生成回答"
+            statusMessage = event.message ?? NSLocalizedString("开始流式生成回答", comment: "Status: Starting streaming response")
             print("Streaming starting")
             
         case "token":
@@ -234,7 +234,7 @@ class ZhiDaoService: ObservableObject {
             
         case "chunk_complete":
             // A chunk of streaming is complete
-            statusMessage = event.message ?? "Chunk complete"
+            statusMessage = event.message ?? NSLocalizedString("Chunk complete", comment: "Status: Chunk complete")
             
         case "complete":
             // The entire process is complete
@@ -264,7 +264,7 @@ class ZhiDaoService: ObservableObject {
                 }
             }
             
-            statusMessage = "响应完成"
+            statusMessage = NSLocalizedString("响应完成", comment: "Status: Response complete")
             
         case "error":
             setError(event.error ?? "Unknown error")
@@ -326,7 +326,7 @@ class ZhiDaoService: ObservableObject {
     
     private func setError(_ message: String) {
         error = message
-        statusMessage = "错误: \(message)"
+        statusMessage = String(format: NSLocalizedString("错误: %@", comment: "Status: Error message"), message)
     }
     
     func reset() {

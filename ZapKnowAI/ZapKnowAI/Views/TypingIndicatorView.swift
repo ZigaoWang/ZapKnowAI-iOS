@@ -139,7 +139,7 @@ struct TypingIndicatorView_Previews: PreviewProvider {
             TypingIndicatorWithLabel()
                 .previewDisplayName("With Label")
             
-            TypingIndicatorWithLabel(message: "正在分析论文")
+            TypingIndicatorWithLabel(message: NSLocalizedString("正在分析论文", comment: "Analyzing papers status"))
                 .previewDisplayName("Custom Message")
             
             FloatingTypingIndicator(isVisible: .constant(true))
