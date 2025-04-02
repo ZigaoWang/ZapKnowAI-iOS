@@ -20,7 +20,7 @@ struct SettingsPanel: View {
                 // Header
                 HStack {
                     Text(NSLocalizedString("设置", comment: "Settings title"))
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
@@ -46,7 +46,7 @@ struct SettingsPanel: View {
                 // About section
                 VStack(alignment: .leading, spacing: 12) {
                     Text(NSLocalizedString("关于", comment: "About section title"))
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     HStack(spacing: 16) {
@@ -72,11 +72,11 @@ struct SettingsPanel: View {
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text(NSLocalizedString("知道 AI", comment: "App name"))
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
                             Text(NSLocalizedString("版本 1.0.0", comment: "Version number"))
-                                .font(.system(size: 14, design: .rounded))
+                                .font(.system(size: 14))
                                 .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
                         }
                     }
@@ -91,7 +91,7 @@ struct SettingsPanel: View {
                 // Links section
                 VStack(alignment: .leading, spacing: 16) {
                     Text(NSLocalizedString("链接", comment: "Links section title"))
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     LinkButton(
@@ -147,7 +147,7 @@ struct LinkButton: View {
                     .frame(width: 20)
                 
                 Text(title)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.system(size: 15))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
                 
                 Spacer()

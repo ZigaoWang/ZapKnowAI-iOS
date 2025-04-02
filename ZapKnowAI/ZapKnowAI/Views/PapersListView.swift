@@ -22,14 +22,14 @@ struct PapersListView: View {
                     .foregroundColor(Color(hex: "3B82F6"))
                 
                 Text(NSLocalizedString("相关论文", comment: "Related papers section title"))
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 
                 Spacer()
                 
                 // Paper count badge
                 Text(String(format: NSLocalizedString("%d篇论文", comment: "Paper count label"), papers.count))
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -84,7 +84,7 @@ struct PapersListView: View {
                     // Hint text
                     if papers.count > 1 {
                         Text(NSLocalizedString("← 滑动查看更多论文", comment: "Swipe to view more papers hint"))
-                            .font(.system(size: 14, design: .rounded))
+                            .font(.system(size: 14))
                             .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                             .padding(.leading, 20)
                             .padding(.bottom, 8)
@@ -123,11 +123,11 @@ struct PapersListView: View {
                 .scaleEffect(1.2)
             
             Text(NSLocalizedString("正在查找相关论文...", comment: "Loading state for paper search"))
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(isDarkMode ? .white : Color(hex: "4B5563"))
             
             Text(NSLocalizedString("我们正在搜索与您的问题相关的论文", comment: "Loading message for paper search"))
-                .font(.system(size: 14, design: .rounded))
+                .font(.system(size: 14))
                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -162,14 +162,14 @@ struct PaperCardView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         // Title
                         Text(paper.title)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             .lineLimit(isExpanded ? 4 : 2)
                         
                         // Authors and year
                         HStack(spacing: 6) {
                             Text(paper.authors)
-                                .font(.system(size: 14, design: .rounded))
+                                .font(.system(size: 14))
                                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                                 .lineLimit(1)
                             
@@ -178,7 +178,7 @@ struct PaperCardView: View {
                                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                             
                             Text(paper.year)
-                                .font(.system(size: 14, design: .rounded))
+                                .font(.system(size: 14))
                                 .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "6B7280"))
                         }
                         

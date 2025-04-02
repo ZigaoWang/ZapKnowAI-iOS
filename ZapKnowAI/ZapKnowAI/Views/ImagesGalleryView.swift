@@ -221,7 +221,7 @@ struct ImageCardView: View {
             
             // Caption (truncated)
             Text(image.caption)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                 .lineLimit(2)
                 .padding(.horizontal, 12)

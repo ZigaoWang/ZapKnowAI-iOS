@@ -265,7 +265,7 @@ struct SavedPaperCardView: View {
                 
                 HStack {
                     Text(paper.link)
-                        .font(.system(size: 12, design: .rounded))
+                        .font(.system(size: 12))
                         .foregroundColor(Color(hex: "3B82F6"))
                         .lineLimit(1)
                     
