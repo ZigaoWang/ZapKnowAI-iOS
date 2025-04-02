@@ -118,6 +118,10 @@ struct ContentView: View {
                         .onTapGesture {
                             withAnimation(.easeOut(duration: 0.25)) {
                                 showSidebar = false
+                                
+                                // Dismiss keyboard
+                                isTextFieldFocused = false
+                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
                         }
                     
@@ -285,6 +289,10 @@ struct ContentView: View {
                                                     selectedConversationId = conversation.id
                                                     withAnimation(.easeOut(duration: 0.25)) {
                                                         showSidebar = false
+                                                        
+                                                        // Dismiss keyboard
+                                                        isTextFieldFocused = false
+                                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                     }
                                                 }
                                             }
@@ -361,6 +369,10 @@ struct ContentView: View {
                             Button {
                                 withAnimation(.easeOut(duration: 0.25)) {
                                     showSidebar = false
+                                    
+                                    // Dismiss keyboard
+                                    isTextFieldFocused = false
+                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                 }
                             } label: {
                                 Image(systemName: "xmark")
@@ -589,6 +601,10 @@ struct ContentView: View {
             Button {
                 withAnimation(.easeOut(duration: 0.25)) {
                     showSidebar.toggle()
+                    
+                    // Dismiss keyboard when opening sidebar
+                    isTextFieldFocused = false
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }
             } label: {
                 Image(systemName: "line.3.horizontal")
