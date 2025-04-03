@@ -43,6 +43,9 @@ struct ContentView: View {
     @State private var isPaperAnalysisComplete = false
     @State private var isPaperAnalysisExpanded = true
     
+    // Background processing state
+    @State private var hasActiveBackgroundRequest = false
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
@@ -232,12 +235,10 @@ struct ContentView: View {
                                         Text(NSLocalizedString("暂无历史对话", comment: "No history message"))
                                             .font(.system(size: 16, weight: .medium))
                                             .foregroundColor(isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
-                                            .multilineTextAlignment(.center)
                                         
                                         Text(NSLocalizedString("开始一个新对话来探索知识", comment: "Start new chat message"))
                                             .font(.system(size: 14))
                                             .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
-                                            .multilineTextAlignment(.center)
                                     }
                                     .padding(.top, 60)
                                     .padding(.horizontal, 20)
@@ -422,6 +423,9 @@ struct ContentView: View {
                     self.isTextFieldFocused = true
                 }
             }
+            
+            // Check for active background requests when returning to the app
+            checkForActiveBackgroundRequests()
         }
         .onChange(of: service.isStreaming) { _, isStreaming in
             if !isStreaming && !service.accumulatedTokens.isEmpty {
@@ -672,50 +676,100 @@ struct ContentView: View {
             Divider()
                 .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
             
-            HStack(alignment: .center, spacing: 10) {
-                // Text field with improved styling and focus
-                TextField(placeholderText, text: $query)
-                    .font(.system(size: 16))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                            .shadow(color: isDarkMode ? Color.black.opacity(0.1) : Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
-                    )
-                    .focused($isTextFieldFocused)
-                    .onTapGesture {
-                        isSearchFocused = true
-                    }
-                
-                // Send/stop button with matching height
-                Button(action: submitQuery) {
-                    HStack {
-                        if service.isStreaming {
-                            Image(systemName: "stop.fill")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                        } else {
-                            Image(systemName: "arrow.up")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                                .opacity(query.isEmpty ? 0.5 : 1.0)
+            HStack(alignment: .center, spacing: 12) {
+                // Enhanced search bar with subtle animation
+                HStack(spacing: 10) {
+                    // Capture the current query for later use
+                    let currentQuery = query
+                    
+                    TextField(placeholderText, text: $query, axis: .vertical)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .font(.system(size: 16))
+                        .padding(.vertical, 10)
+                        .autocorrectionDisabled(true)
+                        .foregroundColor(isDarkMode ? .white : Color(hex: "333333"))
+                        .focused($isTextFieldFocused)
+                        .lineLimit(5)
+                        .onChange(of: query) { oldValue, newValue in
+                            // Show clear button if text is not empty
+                            showClearButton = !query.isEmpty
                         }
+                    
+                    if showClearButton {
+                        Button(action: {
+                            query = ""
+                            showClearButton = false
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(Color(hex: isDarkMode ? "9CA3AF" : "9CA3AF"))
+                                .frame(width: 24, height: 24)
+                        }
+                        .transition(.opacity)
                     }
-                    .frame(width: 44, height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(service.isStreaming ? Color.red : Color(hex: query.isEmpty ? "D1D5DB" : "3B82F6"))
-                    )
+                    
+                    Divider()
+                        .frame(height: 24)
+                    
+                    Button(action: {
+                        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // Dismiss keyboard
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            
+                            // Save current query for notification purposes
+                            let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+                            
+                            // Start streaming
+                            service.streamQuestion(query: trimmedQuery)
+                            
+                            // If notifications are enabled, show alert that the user can close the app
+                            if userSettings.notificationsEnabled {
+                                // Set a brief delay to allow the service to start
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                                    // Show a toast or alert that the request is being processed
+                                    let alertMessage = NSLocalizedString("You can close the app. You'll receive a notification when the answer is ready.", comment: "Alert for background processing")
+                                    showToast(message: alertMessage)
+                                }
+                            }
+                            
+                            // Save conversation when query is sent
+                            storageService.saveConversation(
+                                query: query,
+                                answer: service.accumulatedTokens,
+                                papers: service.papers,
+                                imageUrls: imageUrls,
+                                articles: articles,
+                                completedStages: service.completedStages
+                            )
+                            
+                            // Clear query
+                            query = ""
+                            showClearButton = false
+                        }
+                    }) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 30))
+                            .foregroundColor(Color(hex: "3B82F6"))
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(isDarkMode ? Color(hex: "1E1E1E") : .white))
+                            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                            .opacity(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0)
+                    }
+                    .disabled(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .disabled(query.isEmpty && !service.isStreaming)
-                .scaleEffect(service.isStreaming ? 1.05 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: service.isStreaming)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(hex: isDarkMode ? "333333" : "E5E7EB"), lineWidth: 1)
+                )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color(hex: isDarkMode ? "121212" : "F9F9F9"))
+            .background(isDarkMode ? Color(hex: "121212") : Color(hex: "F9F9F9"))
         }
     }
     
@@ -992,37 +1046,77 @@ struct ContentView: View {
     
     // MARK: - Status Message View
     private func statusMessageView(_ message: String) -> some View {
-        HStack(spacing: 12) {
-            if isTyping {
-                // Typing indicator with improved animation
-                TypingIndicator()
-                    .frame(width: 40, height: 20)
-            } else {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "3B82F6").opacity(0.1))
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: "ellipsis.bubble")
-                        .font(.system(size: 14))
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                if isTyping {
+                    // Typing indicator with improved animation
+                    TypingIndicator()
+                        .frame(width: 50, height: 30)
+                } else {
+                    // Status icon
+                    Image(systemName: "circle.dashed")
+                        .font(.system(size: 16))
                         .foregroundColor(Color(hex: "3B82F6"))
+                        .frame(width: 24, height: 24)
                 }
+                
+                Text(message)
+                    .font(.system(size: 14))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
+                    .lineLimit(3)
+                
+                Spacer()
             }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isDarkMode ? Color(hex: "333333") : Color(hex: "E5E7EB"), lineWidth: 1)
+            )
             
-            Text(message)
-                .font(.system(size: 15))
-                .foregroundColor(isDarkMode ? .white.opacity(0.9) : Color(hex: "4B5563"))
-                .lineLimit(1)
-            
-            Spacer()
+            // Add a Notify Me button if we're processing and notifications aren't enabled yet
+            if service.isStreaming && !userSettings.notificationsEnabled {
+                Button(action: {
+                    // Request notification permissions
+                    NotificationService.shared.requestPermissions { granted in
+                        userSettings.notificationsEnabled = granted
+                        
+                        if granted {
+                            // Show confirmation toast
+                            let message = NSLocalizedString("You'll be notified when your answer is ready. You can close the app now.", comment: "Notification confirmation")
+                            showToast(message: message)
+                            
+                            // Save the current request for background tracking
+                            if let requestId = service.currentRequestId {
+                                NotificationService.shared.trackRequest(requestId: requestId, query: service.currentQuery ?? "")
+                            }
+                        } else {
+                            // Show error toast
+                            let message = NSLocalizedString("Please enable notifications in Settings to use this feature.", comment: "Notification error")
+                            showToast(message: message)
+                        }
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 14))
+                        Text(NSLocalizedString("Notify me when done", comment: "Notification button"))
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .foregroundColor(Color.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "3B82F6"))
+                    )
+                }
+                .padding(.horizontal, 16)
+            }
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
-        )
     }
     
     // MARK: - Answer View
@@ -1573,7 +1667,10 @@ struct SettingsView: View {
                                         }
                                     })
                                     
-                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                    if let windowScene = UIApplication.shared.connectedScenes
+                                       .filter({$0.activationState == .foregroundActive})
+                                       .compactMap({$0 as? UIWindowScene})
+                                       .first,
                                        let rootViewController = windowScene.windows.first?.rootViewController {
                                         rootViewController.present(alert, animated: true)
                                     }
@@ -1802,5 +1899,55 @@ struct SettingsView: View {
 extension String {
     var isNotEmpty: Bool {
         return !self.isEmpty
+    }
+}
+
+// MARK: - Background Processing
+
+extension ContentView {
+    // Check if there are any active background requests when the app is opened
+    private func checkForActiveBackgroundRequests() {
+        // This could be enhanced to actually fetch the specific conversation
+        // when returning to the app after a notification
+        hasActiveBackgroundRequest = false
+    }
+    
+    // Show a toast message
+    private func showToast(message: String) {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter({$0.activationState == .foregroundActive})
+            .compactMap({$0 as? UIWindowScene})
+            .first?.windows
+            .filter({$0.isKeyWindow}).first
+        
+        if let keyWindow = keyWindow {
+            let toastView = UIView(frame: CGRect(x: 0, y: 0, width: keyWindow.bounds.width - 40, height: 80))
+            toastView.backgroundColor = UIColor(named: "AccentColor") ?? UIColor.systemBlue
+            toastView.alpha = 0.0
+            toastView.layer.cornerRadius = 12
+            toastView.clipsToBounds = true
+            
+            let toastLabel = UILabel(frame: CGRect(x: 16, y: 0, width: toastView.bounds.width - 32, height: toastView.bounds.height))
+            toastLabel.textColor = UIColor.white
+            toastLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            toastLabel.text = message
+            toastLabel.numberOfLines = 0
+            toastLabel.textAlignment = .center
+            
+            toastView.addSubview(toastLabel)
+            keyWindow.addSubview(toastView)
+            
+            toastView.center = CGPoint(x: keyWindow.center.x, y: keyWindow.bounds.height - 120)
+            
+            UIView.animate(withDuration: 0.5, delay: 0.0, options: .curveEaseIn, animations: {
+                toastView.alpha = 1.0
+            }, completion: { _ in
+                UIView.animate(withDuration: 0.5, delay: 3.0, options: .curveEaseOut, animations: {
+                    toastView.alpha = 0.0
+                }, completion: { _ in
+                    toastView.removeFromSuperview()
+                })
+            })
+        }
     }
 }

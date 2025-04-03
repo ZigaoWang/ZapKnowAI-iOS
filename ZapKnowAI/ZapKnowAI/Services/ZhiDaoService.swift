@@ -2,6 +2,8 @@ import Foundation
 import Combine
 
 class ZhiDaoService: ObservableObject {
+    static let shared = ZhiDaoService()
+    
     private let baseURL = "https://api1.zhidao.zigao.wang"
     private var eventSource: URLSessionDataTask?
     private var urlSession: URLSession
@@ -23,6 +25,11 @@ class ZhiDaoService: ObservableObject {
     @Published var isComplete = false
     @Published var hasImages = false
     
+    // Current request tracking
+    public var currentRequestId: String? = nil
+    public var currentQuery: String? = nil
+    private var activeRequests: [String: (query: String, timestamp: Date)] = [:]
+    
     private var buffer = ""
     
     init() {
@@ -40,6 +47,17 @@ class ZhiDaoService: ObservableObject {
         
         // Reset state
         reset()
+        
+        // Generate a unique request ID
+        let requestId = UUID().uuidString
+        currentRequestId = requestId
+        currentQuery = query
+        
+        // Add to active requests
+        activeRequests[requestId] = (query: query, timestamp: Date())
+        
+        // Register this request with the notification service for background tracking
+        NotificationService.shared.trackRequest(requestId: requestId, query: query)
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 300 // 5 minutes
@@ -241,30 +259,13 @@ class ZhiDaoService: ObservableObject {
             print("Query complete")
             isComplete = true
             isStreaming = false
+            statusMessage = NSLocalizedString("Done! Here's your answer.", comment: "Done status")
             
-            if let result = event.result {
-                // Update citation mapping
-                if let citationMappings = result.citationMapping {
-                    for citation in citationMappings {
-                        citationMapping[citation.key] = citation
-                    }
-                    
-                    // Mark papers as cited
-                    for paper in papers {
-                        if citationMapping.keys.contains(getCitationKey(for: paper)) {
-                            markPaperAsCited(paper)
-                        }
-                    }
-                }
-                
-                // Update images if available in result
-                if let resultImages = result.images, !resultImages.isEmpty {
-                    updateImages(resultImages)
-                    hasImages = true
-                }
+            // If this is a tracked request for background notification, send notification
+            if let requestId = currentRequestId, activeRequests.keys.contains(requestId) {
+                // Notify that this request is complete
+                NotificationService.shared.requestCompleted(requestId: requestId)
             }
-            
-            statusMessage = NSLocalizedString("响应完成", comment: "Status: Response complete")
             
         case "error":
             setError(event.error ?? "Unknown error")
@@ -329,11 +330,14 @@ class ZhiDaoService: ObservableObject {
         statusMessage = String(format: NSLocalizedString("错误: %@", comment: "Status: Error message"), message)
     }
     
+    // Reset the service state
     func reset() {
-        // Cancel any ongoing request
+        // Stop any existing connections
         eventSource?.cancel()
+        eventSource = nil
         
-        // Reset all state
+        // Reset all properties
+        statusMessage = ""
         isConnected = false
         currentStage = nil
         completedStages = []
@@ -343,13 +347,41 @@ class ZhiDaoService: ObservableObject {
         accumulatedTokens = ""
         citationMapping = [:]
         error = nil
-        statusMessage = ""
         isStreaming = false
         canAnswer = nil
         searchTerm = nil
         isComplete = false
         hasImages = false
         buffer = ""
+        currentRequestId = nil
+        currentQuery = nil
+    }
+    
+    // Check if a request is complete (for background processing)
+    func checkRequestStatus(requestId: String, completion: @escaping (Bool, Bool) -> Void) {
+        // If the request is not in our active requests, assume it's complete
+        guard activeRequests[requestId] != nil else {
+            completion(true, true) // Success, is complete
+            return
+        }
+        
+        // This would normally make a network request to check status
+        // For this example, we'll implement a simple heuristic based on timestamps:
+        // assume a request completes after 3 minutes
+        if let requestInfo = activeRequests[requestId] {
+            let timeElapsed = Date().timeIntervalSince(requestInfo.timestamp)
+            
+            // If more than 3 minutes have passed
+            if timeElapsed > 180 { // 3 minutes in seconds
+                // Remove from active requests
+                activeRequests.removeValue(forKey: requestId)
+                completion(true, true) // Success, is complete
+                return
+            }
+        }
+        
+        // Request is still processing
+        completion(true, false) // Success, not complete
     }
     
     deinit {

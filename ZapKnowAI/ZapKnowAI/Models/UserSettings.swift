@@ -27,15 +27,23 @@ class UserSettings: ObservableObject {
         }
     }
     
+    @Published var notificationsEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(notificationsEnabled, forKey: "notificationsEnabled")
+        }
+    }
+    
     init() {
         self.userName = UserDefaults.standard.string(forKey: "userName") ?? ""
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         self.hasAgreedToTerms = UserDefaults.standard.bool(forKey: "hasAgreedToTerms")
+        self.notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
     }
     
     func resetSettings() {
         userName = ""
         hasCompletedOnboarding = false
         hasAgreedToTerms = false
+        // Keep notification setting unchanged during reset
     }
 }
