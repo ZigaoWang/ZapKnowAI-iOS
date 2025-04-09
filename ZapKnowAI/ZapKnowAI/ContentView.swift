@@ -584,7 +584,10 @@ struct ContentView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(userSettings.isDarkMode ? Color(hex: "333333") : Color(hex: "E5E7EB"), lineWidth: 1)
         )
     }
     
@@ -1596,7 +1599,7 @@ struct SettingsView: View {
         NavigationView {
             ZStack {
                 // Background that matches the app's theme
-                Color(hex: isDarkMode ? "121212" : "F9F9F9")
+                Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1609,26 +1612,26 @@ struct SettingsView: View {
                                     generator.impactOccurred()
                                     
                                     withAnimation(.easeInOut(duration: 0.3)) {
-                                        isDarkMode.toggle()
+                                        userSettings.isDarkMode.toggle()
                                     }
                                 }) {
                                     HStack {
-                                        Image(systemName: isDarkMode ? "sun.max.fill" : "moon.fill")
+                                        Image(systemName: userSettings.isDarkMode ? "sun.max.fill" : "moon.fill")
                                             .font(.system(size: 18))
-                                            .foregroundColor(isDarkMode ? .yellow : .indigo)
+                                            .foregroundColor(userSettings.isDarkMode ? .yellow : .indigo)
                                             .frame(width: 36, height: 36)
                                             .background(
                                                 Circle()
-                                                    .fill(isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
+                                                    .fill(userSettings.isDarkMode ? Color.white.opacity(0.15) : Color.indigo.opacity(0.1))
                                             )
                                         
-                                        Text(NSLocalizedString(isDarkMode ? "亮色模式" : "深色模式", comment: "Theme mode"))
+                                        Text(NSLocalizedString(userSettings.isDarkMode ? "亮色模式" : "深色模式", comment: "Theme mode"))
                                             .font(.system(size: 16))
-                                            .foregroundColor(isDarkMode ? .white : .black)
+                                            .foregroundColor(userSettings.isDarkMode ? .white : .black)
                                         
                                         Spacer()
                                         
-                                        Toggle("", isOn: $isDarkMode)
+                                        Toggle("", isOn: $userSettings.isDarkMode)
                                             .labelsHidden()
                                             .tint(Color(hex: "3B82F6"))
                                     }
@@ -1639,7 +1642,7 @@ struct SettingsView: View {
                                 .buttonStyle(ScaleButtonStyle())
                                 
                                 Divider()
-                                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                    .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                     .padding(.horizontal, 16)
                                 
                                 // Notification toggle
@@ -1691,7 +1694,7 @@ struct SettingsView: View {
                                         
                                         Text(NSLocalizedString("接收通知", comment: "Receive notifications"))
                                             .font(.system(size: 16))
-                                            .foregroundColor(isDarkMode ? .white : .black)
+                                            .foregroundColor(userSettings.isDarkMode ? .white : .black)
                                         
                                         Spacer()
                                         
@@ -1707,11 +1710,11 @@ struct SettingsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                                    .stroke(Color(hex: userSettings.isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
                             )
                         }
                         
@@ -1757,13 +1760,13 @@ struct SettingsView: View {
                                         
                                         Text(NSLocalizedString("重置所有对话", comment: "Reset all conversations"))
                                             .font(.system(size: 16))
-                                            .foregroundColor(isDarkMode ? .white : .black)
+                                            .foregroundColor(userSettings.isDarkMode ? .white : .black)
                                         
                                         Spacer()
                                         
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14))
-                                            .foregroundColor(isDarkMode ? .white.opacity(0.4) : .black.opacity(0.3))
+                                            .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.4) : .black.opacity(0.3))
                                     }
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 14)
@@ -1773,11 +1776,11 @@ struct SettingsView: View {
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                                    .stroke(Color(hex: userSettings.isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
                             )
                         }
                         
@@ -1801,7 +1804,7 @@ struct SettingsView: View {
                                                 .frame(width: 72, height: 72)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 14)
-                                                        .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                                        .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                                                 )
                                         }
                                     }
@@ -1809,11 +1812,11 @@ struct SettingsView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(NSLocalizedString("知道 AI", comment: "App name"))
                                             .font(.system(size: 22, weight: .bold))
-                                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                            .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                         
                                         Text(NSLocalizedString("版本 1.0.0", comment: "App version"))
                                             .font(.system(size: 16))
-                                            .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                                            .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                                     }
                                     
                                     Spacer()
@@ -1825,14 +1828,14 @@ struct SettingsView: View {
                                 Text(NSLocalizedString("知道AI是一款智能研究助手，帮助用户获取学术论文分析、研究数据和相关图片资料，提供深入的科研问题解答。", comment: "App description"))
                                     .font(.system(size: 15))
                                     .lineSpacing(4)
-                                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+                                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
                                     .padding(.horizontal, 16)
                                 
                                 // Features list
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text(NSLocalizedString("主要功能", comment: "Main features"))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
                                     
                                     featureRow(iconName: "magnifyingglass", text: NSLocalizedString("智能搜索和分析学术论文", comment: "Feature: Smart paper search and analysis"))
                                     featureRow(iconName: "doc.text", text: NSLocalizedString("提供多语言研究内容解答", comment: "Feature: Multilingual research answers"))
@@ -1842,64 +1845,96 @@ struct SettingsView: View {
                                 .padding(.horizontal, 16)
                                 
                                 Divider()
-                                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
+                                    .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
                                     .padding(.horizontal, 16)
                                 
                                 // Developer info
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text(NSLocalizedString("开发者", comment: "Developer section"))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
                                     
                                     HStack(spacing: 16) {
                                         // Developer profile image
-                                        ZStack {
-                                            LinearGradient(
-                                                gradient: Gradient(colors: [
-                                                    Color(hex: "6366F1"),
-                                                    Color(hex: "8B5CF6")
-                                                ]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
+                                        Image("DevProfile")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 48, height: 48)
                                             .clipShape(Circle())
-                                            .frame(width: 42, height: 42)
-                                            
-                                            Text("ZW")
-                                                .font(.system(size: 16, weight: .medium))
-                                                .foregroundColor(.white)
-                                        }
+                                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                                         
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text(NSLocalizedString("Zigao Wang", comment: "Developer name"))
-                                                .font(.system(size: 16, weight: .medium))
-                                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                             
                                             Text(NSLocalizedString("研究员 & 开发者", comment: "Developer role"))
                                                 .font(.system(size: 14))
-                                                .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                                                .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                                         }
                                         
                                         Spacer()
                                     }
+                                    
+                                    // Links section
+                                    VStack(spacing: 12) {
+                                        Link(destination: URL(string: "https://www.zigao.wang")!) {
+                                            HStack {
+                                                Image(systemName: "globe")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(Color(hex: "3B82F6"))
+                                                
+                                                Text("www.zigao.wang")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
+                                                
+                                                Spacer()
+                                                
+                                                Image(systemName: "arrow.up.right")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                            }
+                                            .padding(.vertical, 8)
+                                        }
+                                        
+                                        Link(destination: URL(string: "https://github.com/ZigaoWang")!) {
+                                            HStack {
+                                                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(Color(hex: "3B82F6"))
+                                                
+                                                Text("github.com/ZigaoWang")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
+                                                
+                                                Spacer()
+                                                
+                                                Image(systemName: "arrow.up.right")
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                            }
+                                            .padding(.vertical, 8)
+                                        }
+                                    }
+                                    .padding(.top, 8)
                                 }
                                 .padding(.horizontal, 16)
                                 
                                 // Copyright
                                 Text(" 2025 Zigao Wang. All rights reserved.")
                                     .font(.system(size: 14))
-                                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .padding(.top, 8)
                                     .padding(.bottom, 16)
                             }
                             .background(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color(hex: isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
+                                    .stroke(Color(hex: userSettings.isDarkMode ? "333333" : "EEEEEE"), lineWidth: 1)
                             )
                         }
                         
@@ -1915,7 +1950,7 @@ struct SettingsView: View {
                 ToolbarItem(placement: .principal) {
                     Text(NSLocalizedString("设置", comment: "Settings"))
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : .black)
+                        .foregroundColor(userSettings.isDarkMode ? .white : .black)
                 }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
@@ -1925,12 +1960,12 @@ struct SettingsView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(isDarkMode ? .white : .black)
+                            .foregroundColor(userSettings.isDarkMode ? .white : .black)
                     }
                 }
             }
         }
-        .preferredColorScheme(isDarkMode ? .dark : .light)
+        .preferredColorScheme(userSettings.isDarkMode ? .dark : .light)
     }
     
     // Helper function for creating settings sections
@@ -1938,7 +1973,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
+                .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
             
             content()
         }
@@ -1958,7 +1993,7 @@ struct SettingsView: View {
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
+                .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.8) : Color(hex: "4B5563"))
             
             Spacer()
         }
