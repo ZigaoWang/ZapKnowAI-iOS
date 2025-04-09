@@ -261,6 +261,15 @@ class ZhiDaoService: ObservableObject {
             isStreaming = false
             statusMessage = NSLocalizedString("Done! Here's your answer.", comment: "Done status")
             
+            // Mark the final answer generation stage as completed
+            if let finalStage = ProgressStage(rawValue: "answer_generation") {
+                DispatchQueue.main.async {
+                    self.completedStages.insert(finalStage)
+                    // Ensure current stage is also set to the final stage for consistency
+                    self.currentStage = finalStage
+                }
+            }
+            
             // If this is a tracked request for background notification, send notification
             if let requestId = currentRequestId, activeRequests.keys.contains(requestId) {
                 // Notify that this request is complete
