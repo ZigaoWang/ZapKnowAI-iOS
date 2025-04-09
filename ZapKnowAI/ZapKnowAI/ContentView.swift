@@ -16,7 +16,8 @@ struct ContentView: View {
     @State private var isSearchFocused = false
     @State private var showClearButton = false
     @State private var isTyping = false
-    @State private var isDarkMode = false
+    // Using userSettings.isDarkMode instead of local state
+    // @State private var isDarkMode = false
     @State private var showSettings = false
     @State private var imageUrls: [String] = []
     @State private var articles: [Article] = []
@@ -68,7 +69,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // Main background - using same color for entire background
-            Color(hex: isDarkMode ? "121212" : "F9F9F9")
+            Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                 .ignoresSafeArea()
             
             // Main content
@@ -79,7 +80,7 @@ struct ContentView: View {
                 // Main content
                 ZStack {
                     // Use the same background color for content area
-                    Color(hex: isDarkMode ? "121212" : "F9F9F9")
+                    Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                         .ignoresSafeArea()
                     
                     VStack(spacing: 0) {
@@ -88,7 +89,7 @@ struct ContentView: View {
                             // Show saved conversation
                             SavedConversationView(
                                 conversation: conversation,
-                                isDarkMode: isDarkMode,
+                                isDarkMode: userSettings.isDarkMode,
                                 onBack: {
                                     withAnimation(.easeOut(duration: 0.25)) {
                                         selectedConversationId = nil
@@ -108,7 +109,7 @@ struct ContentView: View {
                         // Input area always shown at bottom
                         queryInputBar
                     }
-                    .background(Color(hex: isDarkMode ? "121212" : "F9F9F9"))
+                    .background(Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -137,11 +138,11 @@ struct ContentView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(NSLocalizedString("知道 AI", comment: "App name"))
                                         .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                     
                                     Text(NSLocalizedString("你的研究伙伴", comment: "App subtitle"))
                                         .font(.system(size: 16))
-                                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
+                                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.top, 24)
@@ -191,18 +192,18 @@ struct ContentView: View {
                                 HStack {
                                     Image(systemName: "magnifyingglass")
                                         .font(.system(size: 16))
-                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                                        .foregroundColor(userSettings.isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                                     
                                     Text(NSLocalizedString("搜索对话", comment: "Search conversations placeholder"))
                                         .font(.system(size: 15))
-                                        .foregroundColor(isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
+                                        .foregroundColor(userSettings.isDarkMode ? Color(hex: "9CA3AF") : Color(hex: "9CA3AF"))
                                     
                                     Spacer()
                                 }
                                 .padding(12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
+                                        .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
                                 )
                                 .padding(.horizontal, 20)
                                 
@@ -213,7 +214,7 @@ struct ContentView: View {
                                 // Section title with improved styling
                                 Text(NSLocalizedString("今天", comment: "Today section header"))
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
+                                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal, 20)
                                     .padding(.bottom, 8)
@@ -224,21 +225,21 @@ struct ContentView: View {
                                     VStack(spacing: 20) {
                                         ZStack {
                                             Circle()
-                                                .fill(isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
+                                                .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
                                                 .frame(width: 80, height: 80)
                                             
                                             Image(systemName: "bubble.left.and.bubble.right")
                                                 .font(.system(size: 32))
-                                                .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
+                                                .foregroundColor(userSettings.isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
                                         }
                                         
                                         Text(NSLocalizedString("暂无历史对话", comment: "No history message"))
                                             .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
+                                            .foregroundColor(userSettings.isDarkMode ? Color.white.opacity(0.8) : Color(hex: "6B7280"))
                                         
                                         Text(NSLocalizedString("开始一个新对话来探索知识", comment: "Start new chat message"))
                                             .font(.system(size: 14))
-                                            .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
+                                            .foregroundColor(userSettings.isDarkMode ? Color.white.opacity(0.5) : Color(hex: "9CA3AF"))
                                     }
                                     .padding(.top, 60)
                                     .padding(.horizontal, 20)
@@ -252,24 +253,24 @@ struct ContentView: View {
                                                     // Icon with enhanced design
                                                     ZStack {
                                                         Circle()
-                                                            .fill(selectedConversationId == conversation.id ? Color(hex: "3B82F6").opacity(0.2) : (isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6")))
+                                                            .fill(selectedConversationId == conversation.id ? Color(hex: "3B82F6").opacity(0.2) : (userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6")))
                                                             .frame(width: 36, height: 36)
                                                         
                                                         Image(systemName: "text.bubble.fill")
                                                             .font(.system(size: 16))
-                                                            .foregroundColor(selectedConversationId == conversation.id ? Color(hex: "3B82F6") : (isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280")))
+                                                            .foregroundColor(selectedConversationId == conversation.id ? Color(hex: "3B82F6") : (userSettings.isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280")))
                                                     }
                                                     
                                                     // Text content with enhanced typography
                                                     VStack(alignment: .leading, spacing: 4) {
                                                         Text(shortenConversationQuery(conversation.query))
                                                             .font(.system(size: 14, weight: selectedConversationId == conversation.id ? .semibold : .medium))
-                                                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                                            .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                                             .lineLimit(1)
                                                         
                                                         Text(dateFormatter.string(from: conversation.timestamp))
                                                             .font(.system(size: 12))
-                                                            .foregroundColor(isDarkMode ? Color.white.opacity(0.5) : Color(hex: "6B7280"))
+                                                            .foregroundColor(userSettings.isDarkMode ? Color.white.opacity(0.5) : Color(hex: "6B7280"))
                                                     }
                                                     
                                                     Spacer()
@@ -283,7 +284,7 @@ struct ContentView: View {
                                                 .padding(12)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 12)
-                                                        .fill(selectedConversationId == conversation.id ? (isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6")) : Color.clear)
+                                                        .fill(selectedConversationId == conversation.id ? (userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6")) : Color.clear)
                                                 )
                                                 .padding(.horizontal, 12)
                                                 .contentShape(Rectangle())
@@ -331,11 +332,11 @@ struct ContentView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(userSettings.userName.isEmpty ? NSLocalizedString("游客", comment: "Guest user") : userSettings.userName)
                                             .font(.system(size: 17, weight: .medium))
-                                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                            .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                         
                                         Text(NSLocalizedString("研究员", comment: "Researcher role"))
                                             .font(.system(size: 14))
-                                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
+                                            .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
                                     }
                                     
                                     Spacer()
@@ -356,17 +357,17 @@ struct ContentView: View {
                                     }) {
                                         Image(systemName: "gear")
                                             .font(.system(size: 16))
-                                            .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
+                                            .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
                                             .frame(width: 36, height: 36)
                                             .background(
                                                 Circle()
-                                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
+                                                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
                                             )
                                     }
                                     .buttonStyle(ScaleButtonStyle())
                                 }
                                 .padding(20)
-                                .background(isDarkMode ? Color(hex: "121212") : Color(hex: "FFFFFF"))
+                                .background(userSettings.isDarkMode ? Color(hex: "121212") : Color(hex: "FFFFFF"))
                             }
                             
                             // Close button with improved design
@@ -381,11 +382,11 @@ struct ContentView: View {
                             } label: {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                                     .padding(10)
                                     .background(
                                         Circle()
-                                            .fill(isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
+                                            .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6"))
                                             .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                                     )
                             }
@@ -393,7 +394,7 @@ struct ContentView: View {
                             .padding(20)
                         }
                         .frame(width: min(UIScreen.main.bounds.width * 0.85, 320))
-                        .background(Color(hex: isDarkMode ? "121212" : "FFFFFF"))
+                        .background(Color(hex: userSettings.isDarkMode ? "121212" : "FFFFFF"))
                         
                         Spacer(minLength: 0)
                     }
@@ -404,16 +405,17 @@ struct ContentView: View {
                 // Settings as a full screen page instead of an overlay
                 if showSettings {
                     SettingsView(
-                        isDarkMode: $isDarkMode,
+                        isDarkMode: $userSettings.isDarkMode,
                         isShowing: $showSettings,
-                        onReset: resetAll
+                        onReset: resetAll,
+                        userSettings: userSettings
                     )
                     .transition(.move(edge: .bottom))
                     .zIndex(3)
                 }
             }
         }
-        .preferredColorScheme(isDarkMode ? .dark : .light)
+        .preferredColorScheme(userSettings.isDarkMode ? .dark : .light)
         .animation(.easeOut(duration: 0.25), value: showSidebar)
         .animation(.easeOut(duration: 0.25), value: showSettings)
         .onAppear {
@@ -505,7 +507,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(NSLocalizedString("试试以下问题", comment: "Try these questions"))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                         .padding(.horizontal, 20)
                     
                     ForEach(exampleQuestions, id: \.self) { question in
@@ -525,7 +527,7 @@ struct ContentView: View {
                                 
                                 Text(question)
                                     .font(.system(size: 15))
-                                    .foregroundColor(isDarkMode ? .white : Color(hex: "374151"))
+                                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "374151"))
                                     .lineLimit(1)
                                 
                                 Spacer()
@@ -538,8 +540,8 @@ struct ContentView: View {
                             .padding(.horizontal, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                                    .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+                                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                                    .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
                             )
                             .padding(.horizontal, 20)
                         }
@@ -569,11 +571,11 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                 
                 Text(description)
                     .font(.system(size: 14))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
+                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.7) : Color(hex: "6B7280"))
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -581,8 +583,8 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
     
@@ -616,11 +618,11 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "line.3.horizontal")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
+                    .foregroundColor(Color(hex: userSettings.isDarkMode ? "FFFFFF" : "232323"))
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(Color(hex: isDarkMode ? "1E1E1E" : "FFFFFF").opacity(0.8))
+                            .fill(Color(hex: userSettings.isDarkMode ? "1E1E1E" : "FFFFFF").opacity(0.8))
                     )
             }
             .buttonStyle(ScaleButtonStyle())
@@ -632,7 +634,7 @@ struct ContentView: View {
                 HStack(spacing: 8) {
                     Text(NSLocalizedString("知道 AI", comment: "App name"))
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
+                        .foregroundColor(Color(hex: userSettings.isDarkMode ? "FFFFFF" : "232323"))
                 }
             }
             
@@ -653,11 +655,11 @@ struct ContentView: View {
             } label: {
                 Image(systemName: "gear")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(Color(hex: isDarkMode ? "FFFFFF" : "232323"))
+                    .foregroundColor(Color(hex: userSettings.isDarkMode ? "FFFFFF" : "232323"))
                     .frame(width: 36, height: 36)
                     .background(
                         Circle()
-                            .fill(Color(hex: isDarkMode ? "1E1E1E" : "FFFFFF").opacity(0.8))
+                            .fill(Color(hex: userSettings.isDarkMode ? "1E1E1E" : "FFFFFF").opacity(0.8))
                     )
             }
             .buttonStyle(ScaleButtonStyle())
@@ -666,7 +668,7 @@ struct ContentView: View {
         .padding(.vertical, 12)
         .background(
             // Use a clear background with no shadow for the top bar
-            Color(hex: isDarkMode ? "121212" : "F9F9F9")
+            Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
         )
     }
     
@@ -674,7 +676,7 @@ struct ContentView: View {
     private var queryInputBar: some View {
         VStack(spacing: 0) {
             Divider()
-                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
             
             HStack(alignment: .center, spacing: 12) {
                 // Enhanced search bar with subtle animation
@@ -687,7 +689,7 @@ struct ContentView: View {
                         .font(.system(size: 16))
                         .padding(.vertical, 10)
                         .autocorrectionDisabled(true)
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "333333"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "333333"))
                         .focused($isTextFieldFocused)
                         .lineLimit(5)
                         .onChange(of: query) { oldValue, newValue in
@@ -701,7 +703,7 @@ struct ContentView: View {
                             showClearButton = false
                         }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(Color(hex: isDarkMode ? "9CA3AF" : "9CA3AF"))
+                                .foregroundColor(Color(hex: userSettings.isDarkMode ? "9CA3AF" : "9CA3AF"))
                                 .frame(width: 24, height: 24)
                         }
                         .transition(.opacity)
@@ -750,7 +752,7 @@ struct ContentView: View {
                             .font(.system(size: 30))
                             .foregroundColor(Color(hex: "3B82F6"))
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(isDarkMode ? Color(hex: "1E1E1E") : .white))
+                            .background(Circle().fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white))
                             .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                             .opacity(query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0)
                     }
@@ -760,16 +762,16 @@ struct ContentView: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                        .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: isDarkMode ? "333333" : "E5E7EB"), lineWidth: 1)
+                        .stroke(Color(hex: userSettings.isDarkMode ? "333333" : "E5E7EB"), lineWidth: 1)
                 )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(isDarkMode ? Color(hex: "121212") : Color(hex: "F9F9F9"))
+            .background(userSettings.isDarkMode ? Color(hex: "121212") : Color(hex: "F9F9F9"))
         }
     }
     
@@ -807,7 +809,7 @@ struct ContentView: View {
                                 
                             Text(NSLocalizedString("相关图片", comment: "Related images"))
                                 .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                                .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                         }
                         .padding(.horizontal, 16)
                         
@@ -821,10 +823,10 @@ struct ContentView: View {
                                             .frame(width: 200, height: 150)
                                             .clipped()
                                             .cornerRadius(12)
-                                            .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                            .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                                     } placeholder: {
                                         Rectangle()
-                                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                            .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                                             .frame(width: 200, height: 150)
                                             .cornerRadius(12)
                                             .overlay(
@@ -898,32 +900,32 @@ struct ContentView: View {
                         
                     Text("查看论文和延伸阅读")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
                     // Show count of papers and articles
                     Text("\(service.papers.count + articles.count)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                         )
                     
                     Image(systemName: isSourcesExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                         .padding(.leading, 4)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
-                        .shadow(color: isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+                        .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                        .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.2) : Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
                 )
                 .padding(.horizontal, 16)
             }
@@ -963,23 +965,23 @@ struct ContentView: View {
                         
                     Text(NSLocalizedString("参考论文", comment: "Reference papers"))
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
                     Text("\(service.papers.count)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                     
                     Image(systemName: isPapersExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                         .padding(.leading, 4)
                 }
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
+                        .fill(userSettings.isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
                 )
             }
             .buttonStyle(ScaleButtonStyle())
@@ -1011,23 +1013,23 @@ struct ContentView: View {
                         
                     Text(NSLocalizedString("延伸阅读", comment: "Further reading"))
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
                     Text("\(articles.count)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                     
                     Image(systemName: isArticlesExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                         .padding(.leading, 4)
                 }
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
+                        .fill(userSettings.isDarkMode ? Color(hex: "262626") : Color(hex: "F3F4F6"))
                 )
             }
             .buttonStyle(ScaleButtonStyle())
@@ -1035,7 +1037,7 @@ struct ContentView: View {
             if isArticlesExpanded {
                 VStack(spacing: 8) {
                     ForEach(articles) { article in
-                        ArticleCardView(article: article, isDarkMode: isDarkMode)
+                        ArticleCardView(article: article, isDarkMode: userSettings.isDarkMode)
                             .padding(.bottom, 8)
                     }
                 }
@@ -1062,7 +1064,7 @@ struct ContentView: View {
                 
                 Text(message)
                     .font(.system(size: 14))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
+                    .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
                     .lineLimit(3)
                 
                 Spacer()
@@ -1070,11 +1072,11 @@ struct ContentView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isDarkMode ? Color(hex: "1E1E1E") : .white)
+                    .fill(userSettings.isDarkMode ? Color(hex: "1E1E1E") : .white)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isDarkMode ? Color(hex: "333333") : Color(hex: "E5E7EB"), lineWidth: 1)
+                    .stroke(userSettings.isDarkMode ? Color(hex: "333333") : Color(hex: "E5E7EB"), lineWidth: 1)
             )
             
             // Add a Notify Me button if we're processing and notifications aren't enabled yet
@@ -1143,7 +1145,7 @@ struct ContentView: View {
                     
                     Text(NSLocalizedString("原始问题", comment: "Original question"))
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
@@ -1172,9 +1174,9 @@ struct ContentView: View {
                             .padding(.vertical, 8)
                             .background(
                                 Capsule()
-                                    .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                    .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                             )
-                            .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                            .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                         }
                         .buttonStyle(ScaleButtonStyle())
                     }
@@ -1187,7 +1189,7 @@ struct ContentView: View {
                     // Markdown content with improved styling
                     MarkdownView_Native(markdown: service.accumulatedTokens)
                         .padding(24)
-                        .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                        .environment(\.colorScheme, userSettings.isDarkMode ? .dark : .light)
                     
                     // Typing indicator - only show when actively generating the answer
                     if isTyping && isGeneratingResponse {
@@ -1201,9 +1203,9 @@ struct ContentView: View {
                         .padding(.bottom, 16)
                     }
                 }
-                .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                .background(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
                 .cornerRadius(20)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
             }
         )
     }
@@ -1381,7 +1383,7 @@ struct ContentView: View {
                     
                     Text(NSLocalizedString("论文分析", comment: "Paper analysis"))
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     
                     Spacer()
                     
@@ -1392,7 +1394,7 @@ struct ContentView: View {
                     
                     Image(systemName: isPaperAnalysisExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
+                        .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.6) : Color(hex: "6B7280"))
                         .padding(.leading, 4)
                 }
                 .padding(.horizontal, 24)
@@ -1405,7 +1407,7 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     MarkdownView_Native(markdown: paperAnalysisContent)
                         .padding(24)
-                        .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                        .environment(\.colorScheme, userSettings.isDarkMode ? .dark : .light)
                     
                     // Typing indicator - only show when actively generating paper analysis
                     if isTyping && isGeneratingResponse && !isPaperAnalysisComplete {
@@ -1419,9 +1421,9 @@ struct ContentView: View {
                         .padding(.bottom, 16)
                     }
                 }
-                .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+                .background(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
                 .cornerRadius(20)
-                .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
             }
         }
         .padding(.horizontal, 16)
@@ -1444,7 +1446,7 @@ struct ContentView: View {
                 
                 Text(NSLocalizedString("研究答案", comment: "Research answer"))
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                    .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                 
                 Spacer()
                 
@@ -1473,9 +1475,9 @@ struct ContentView: View {
                         .padding(.vertical, 8)
                         .background(
                             Capsule()
-                                .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
                         )
-                        .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
+                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
                     }
                     .buttonStyle(ScaleButtonStyle())
                 }
@@ -1488,7 +1490,7 @@ struct ContentView: View {
                 // Markdown content with improved styling
                 MarkdownView_Native(markdown: synthesisContent)
                     .padding(24)
-                    .environment(\.colorScheme, isDarkMode ? .dark : .light)
+                    .environment(\.colorScheme, userSettings.isDarkMode ? .dark : .light)
                 
                 // Typing indicator - only show when actively generating synthesis
                 if isTyping && isGeneratingResponse && isPaperAnalysisComplete && synthesisContent.isEmpty {
@@ -1502,9 +1504,9 @@ struct ContentView: View {
                     .padding(.bottom, 16)
                 }
             }
-            .background(isDarkMode ? Color(hex: "1E1E1E") : Color.white)
+            .background(userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color.white)
             .cornerRadius(20)
-            .shadow(color: isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
+            .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.08), radius: 16, x: 0, y: 4)
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
@@ -1586,6 +1588,7 @@ struct SettingsView: View {
     @Binding var isDarkMode: Bool
     @Binding var isShowing: Bool
     var onReset: () -> Void
+    @ObservedObject var userSettings: UserSettings
     
     @Environment(\.colorScheme) var colorScheme
     
@@ -1626,6 +1629,73 @@ struct SettingsView: View {
                                         Spacer()
                                         
                                         Toggle("", isOn: $isDarkMode)
+                                            .labelsHidden()
+                                            .tint(Color(hex: "3B82F6"))
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                                }
+                                .buttonStyle(ScaleButtonStyle())
+                                
+                                Divider()
+                                    .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
+                                    .padding(.horizontal, 16)
+                                
+                                // Notification toggle
+                                Button(action: {
+                                    let generator = UIImpactFeedbackGenerator(style: .light)
+                                    generator.impactOccurred()
+                                    
+                                    // If turning on notifications, request permissions
+                                    if !userSettings.notificationsEnabled {
+                                        NotificationService.shared.requestPermissions { granted in
+                                            DispatchQueue.main.async {
+                                                // Only enable if permission was granted
+                                                userSettings.notificationsEnabled = granted
+                                                
+                                                // If permission was denied, show an alert
+                                                if !granted {
+                                                    let alert = UIAlertController(
+                                                        title: NSLocalizedString("通知权限被拒绝", comment: "Notification permission denied"),
+                                                        message: NSLocalizedString("请在设备设置中允许知道AI发送通知。", comment: "Please enable notifications in settings"),
+                                                        preferredStyle: .alert
+                                                    )
+                                                    
+                                                    alert.addAction(UIAlertAction(title: NSLocalizedString("好的", comment: "OK"), style: .default))
+                                                    
+                                                    if let windowScene = UIApplication.shared.connectedScenes
+                                                        .filter({$0.activationState == .foregroundActive})
+                                                        .compactMap({$0 as? UIWindowScene})
+                                                        .first,
+                                                        let rootViewController = windowScene.windows.first?.rootViewController {
+                                                        rootViewController.present(alert, animated: true)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // Simply toggle it off if it was on
+                                        userSettings.notificationsEnabled = false
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "bell.fill")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(Color(hex: "3B82F6"))
+                                            .frame(width: 36, height: 36)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color(hex: "3B82F6").opacity(0.1))
+                                            )
+                                        
+                                        Text(NSLocalizedString("接收通知", comment: "Receive notifications"))
+                                            .font(.system(size: 16))
+                                            .foregroundColor(isDarkMode ? .white : .black)
+                                        
+                                        Spacer()
+                                        
+                                        Toggle("", isOn: $userSettings.notificationsEnabled)
                                             .labelsHidden()
                                             .tint(Color(hex: "3B82F6"))
                                     }

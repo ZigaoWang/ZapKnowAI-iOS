@@ -57,7 +57,10 @@ class ZhiDaoService: ObservableObject {
         activeRequests[requestId] = (query: query, timestamp: Date())
         
         // Register this request with the notification service for background tracking
-        NotificationService.shared.trackRequest(requestId: requestId, query: query)
+        // Only if notifications are enabled in user settings
+        if UserDefaults.standard.bool(forKey: "notificationsEnabled") {
+            NotificationService.shared.trackRequest(requestId: requestId, query: query)
+        }
         
         var request = URLRequest(url: url)
         request.timeoutInterval = 300 // 5 minutes
@@ -272,8 +275,11 @@ class ZhiDaoService: ObservableObject {
             
             // If this is a tracked request for background notification, send notification
             if let requestId = currentRequestId, activeRequests.keys.contains(requestId) {
-                // Notify that this request is complete
-                NotificationService.shared.requestCompleted(requestId: requestId)
+                // Only notify if notifications are enabled
+                if UserDefaults.standard.bool(forKey: "notificationsEnabled") {
+                    // Notify that this request is complete
+                    NotificationService.shared.requestCompleted(requestId: requestId)
+                }
             }
             
         case "error":

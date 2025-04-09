@@ -9,6 +9,8 @@ import Foundation
 import SwiftUI
 
 class UserSettings: ObservableObject {
+    // MARK: - Published Properties
+    
     @Published var userName: String {
         didSet {
             UserDefaults.standard.set(userName, forKey: "userName")
@@ -33,17 +35,32 @@ class UserSettings: ObservableObject {
         }
     }
     
+    @Published var isDarkMode: Bool {
+        didSet {
+            UserDefaults.standard.set(isDarkMode, forKey: "isDarkMode")
+        }
+    }
+    
+    // MARK: - Shared Instance
+    
+    static let shared = UserSettings()
+    
+    // MARK: - Initialization
+    
     init() {
         self.userName = UserDefaults.standard.string(forKey: "userName") ?? ""
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
         self.hasAgreedToTerms = UserDefaults.standard.bool(forKey: "hasAgreedToTerms")
         self.notificationsEnabled = UserDefaults.standard.bool(forKey: "notificationsEnabled")
+        self.isDarkMode = UserDefaults.standard.bool(forKey: "isDarkMode")
     }
+    
+    // MARK: - Reset Settings
     
     func resetSettings() {
         userName = ""
         hasCompletedOnboarding = false
         hasAgreedToTerms = false
-        // Keep notification setting unchanged during reset
+        // Keep notification setting and dark mode unchanged during reset
     }
 }

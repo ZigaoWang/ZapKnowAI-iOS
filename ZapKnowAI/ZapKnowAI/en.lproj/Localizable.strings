@@ -124,3 +124,11 @@
 "Processing" = "Processing";
 "Processing substage: " = "Processing substage: ";
 "Chunk complete" = "Chunk complete"; 
+
+// Notifications
+"接收通知" = "Receive Notifications";
+"通知权限被拒绝" = "Notification Permission Denied";
+"请在设备设置中允许知道AI发送通知。" = "Please enable notifications for Zap Know AI in device settings.";
+"好的" = "OK";
+"回答已准备就绪" = "Answer Ready";
+"您对于 '%@' 的问题已有答案" = "Your question '%@' has been answered";

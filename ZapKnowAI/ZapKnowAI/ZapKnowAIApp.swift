@@ -23,7 +23,7 @@ struct ZapKnowAIApp: App {
         WindowGroup {
             if userSettings.hasCompletedOnboarding {
                 ContentView(userSettings: userSettings)
-                    .preferredColorScheme(.light) // Start with light mode by default
+                    .preferredColorScheme(userSettings.isDarkMode ? .dark : .light) // Use the user's preference for dark/light mode
                     .accentColor(.blue)
                     .onAppear {
                         // Check and request notification permissions if needed

@@ -249,29 +249,37 @@ class NotificationService: NSObject, ObservableObject {
         }
     }
     
-    // Send a notification that a request is complete
+    // Send a notification when a request is completed
     private func sendCompletionNotification(for requestInfo: RequestInfo) {
+        // Check if notifications are enabled in UserSettings
+        guard UserDefaults.standard.bool(forKey: "notificationsEnabled") else {
+            print("Notifications are disabled in user settings")
+            return
+        }
+        
+        // Create the notification content
         let content = UNMutableNotificationContent()
-        content.title = NSLocalizedString("Request Complete", comment: "Notification title")
-        content.body = String(format: NSLocalizedString("Your question \"%@\" has been answered", comment: "Notification body"), requestInfo.query)
-        content.sound = .default
-        content.badge = 1
+        content.title = NSLocalizedString("回答已准备就绪", comment: "Answer is ready notification title")
+        content.body = String(format: NSLocalizedString("您对于 '%@' 的问题已有答案", comment: "Format for question answered notification"), requestInfo.query)
+        content.sound = UNNotificationSound.default
         content.categoryIdentifier = categoryIdentifier
         
-        // Add the request ID as user info
+        // Store the request ID in the notification for retrieval when tapped
         content.userInfo = ["requestId": requestInfo.id]
         
-        // Create a request with immediate trigger
-        let request = UNNotificationRequest(
-            identifier: requestInfo.id,
-            content: content,
-            trigger: nil
-        )
+        // Create an immediate trigger
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         
-        // Add the notification request
+        // Create the request
+        let identifier = "request-\(requestInfo.id)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        
+        // Add the request
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("Error sending notification: \(error)")
+            } else {
+                print("Successfully scheduled notification for request: \(requestInfo.id)")
             }
         }
     }
