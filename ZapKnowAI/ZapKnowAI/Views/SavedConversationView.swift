@@ -62,14 +62,23 @@ struct SavedConversationView: View {
                             ScrollView(.horizontal) {
                                 HStack(spacing: 10) {
                                     ForEach(conversation.imageUrls, id: \.self) { url in
-                                        AsyncImage(url: URL(string: url)) { image in
-                                            image
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(height: 200)
-                                                .cornerRadius(10)
-                                        } placeholder: {
-                                            ProgressView()
+                                        AsyncImage(url: URL(string: url)) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image
+                                                    .resizable()
+                                                    .scaledToFit()
+                                                    .frame(height: 200)
+                                                    .cornerRadius(10)
+                                            case .failure(_):
+                                                // Don't show anything if image failed to load
+                                                EmptyView()
+                                            case .empty:
+                                                ProgressView()
+                                                    .frame(height: 200)
+                                            @unknown default:
+                                                EmptyView()
+                                            }
                                         }
                                     }
                                 }

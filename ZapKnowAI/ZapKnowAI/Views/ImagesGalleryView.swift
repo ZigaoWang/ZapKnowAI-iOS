@@ -208,11 +208,7 @@ struct ImageCardView: View {
                         .frame(height: 160)
                         .clipped()
                 case .failure:
-                    Image(systemName: "photo")
-                        .font(.system(size: 40))
-                        .foregroundColor(Color(hex: isDarkMode ? "6B7280" : "9CA3AF"))
-                        .frame(maxWidth: .infinity, maxHeight: 160)
-                        .background(Color(hex: isDarkMode ? "1F2937" : "F3F4F6"))
+                    EmptyView()
                 @unknown default:
                     EmptyView()
                 }

@@ -819,23 +819,31 @@ struct ContentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 ForEach(imageUrls, id: \.self) { url in
-                                    AsyncImage(url: URL(string: url)) { image in
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 200, height: 150)
-                                            .clipped()
-                                            .cornerRadius(12)
-                                            .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                                    } placeholder: {
-                                        Rectangle()
-                                            .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                                            .frame(width: 200, height: 150)
-                                            .cornerRadius(12)
-                                            .overlay(
-                                                ProgressView()
-                                                    .progressViewStyle(CircularProgressViewStyle())
-                                            )
+                                    AsyncImage(url: URL(string: url)) { phase in
+                                        switch phase {
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: 200, height: 150)
+                                                .clipped()
+                                                .cornerRadius(12)
+                                                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                        case .failure(_):
+                                            // Don't show anything if image failed to load
+                                            EmptyView()
+                                        case .empty:
+                                            Rectangle()
+                                                .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                                .frame(width: 200, height: 150)
+                                                .cornerRadius(12)
+                                                .overlay(
+                                                    ProgressView()
+                                                        .progressViewStyle(CircularProgressViewStyle())
+                                                )
+                                        @unknown default:
+                                            EmptyView()
+                                        }
                                     }
                                     .padding(.leading, imageUrls.firstIndex(of: url) == 0 ? 16 : 0)
                                     .padding(.trailing, imageUrls.lastIndex(of: url) == imageUrls.count - 1 ? 16 : 0)
