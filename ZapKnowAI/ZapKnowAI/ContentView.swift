@@ -47,6 +47,9 @@ struct ContentView: View {
     // Background processing state
     @State private var hasActiveBackgroundRequest = false
     
+    // State to control query input bar visibility
+    @State private var showQueryInputBar = true
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
@@ -107,7 +110,10 @@ struct ContentView: View {
                         }
                         
                         // Input area always shown at bottom
-                        queryInputBar
+                        if showQueryInputBar {
+                            queryInputBar
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
                     }
                     .background(Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9"))
                 }
@@ -630,8 +636,23 @@ struct ContentView: View {
             }
             .buttonStyle(ScaleButtonStyle())
             
+            // New Chat button
+            Button {
+                onNewChat()
+            } label: {
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(Color(hex: userSettings.isDarkMode ? "FFFFFF" : "232323"))
+                    .frame(width: 36, height: 36)
+                    .background(
+                        Circle()
+                            .fill(Color(hex: userSettings.isDarkMode ? "1E1E1E" : "FFFFFF").opacity(0.8))
+                    )
+            }
+            .buttonStyle(ScaleButtonStyle())
+
             Spacer()
-            
+
             // App title (shown when no conversation is selected)
             if selectedConversationId == nil {
                 HStack(spacing: 8) {
@@ -717,15 +738,40 @@ struct ContentView: View {
                     
                     Button(action: {
                         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // Hide the input bar IMMEDIATELY
+                            withAnimation {
+                                showQueryInputBar = false
+                            }
+                            
                             // Dismiss keyboard
                             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             
                             // Save current query for notification purposes
-                            let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+                            // Let's use the already trimmed query
                             
                             // Start streaming
-                            service.streamQuestion(query: trimmedQuery)
+                            service.streamQuestion(query: query.trimmingCharacters(in: .whitespacesAndNewlines))
                             
+                            // Trigger image search as well
+                            performImageSearch(query: query.trimmingCharacters(in: .whitespacesAndNewlines)) // Pass trimmed query
+                            
+                            // Save conversation *shell* when query is sent (answer will be empty initially)
+                            storageService.saveConversation(
+                                query: query.trimmingCharacters(in: .whitespacesAndNewlines), // Use trimmed query
+                                answer: "", // Initially empty answer
+                                papers: [], // Initially empty papers
+                                imageUrls: [], // Initially empty images
+                                articles: [], // Initially empty articles
+                                completedStages: [] // Initially empty stages
+                            )
+                            
+                            // Update typing state etc. for UI feedback
+                            withAnimation {
+                                isSearchFocused = false
+                                isTyping = true
+                                selectedConversationId = nil // Ensure we're viewing the new response area
+                            }
+
                             // If notifications are enabled, show alert that the user can close the app
                             if userSettings.notificationsEnabled {
                                 // Set a brief delay to allow the service to start
@@ -736,19 +782,11 @@ struct ContentView: View {
                                 }
                             }
                             
-                            // Save conversation when query is sent
-                            storageService.saveConversation(
-                                query: query,
-                                answer: service.accumulatedTokens,
-                                papers: service.papers,
-                                imageUrls: imageUrls,
-                                articles: articles,
-                                completedStages: service.completedStages
-                            )
-                            
-                            // Clear query
+                            // Clear query *after* using it
                             query = ""
                             showClearButton = false
+                            
+                            // showQueryInputBar = false // Moved earlier
                         }
                     }) {
                         Image(systemName: "arrow.up.circle.fill")
@@ -1226,7 +1264,14 @@ struct ContentView: View {
     // Submit a new query
     private func submitQuery() {
         guard !query.isEmpty else { return }
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines) // Trim here
+        guard !trimmedQuery.isEmpty else { return } // Check trimmed query
         
+        // Hide the input bar IMMEDIATELY
+        withAnimation {
+            showQueryInputBar = false
+        }
+
         // Reset split content
         paperAnalysisContent = ""
         synthesisContent = ""
@@ -1236,14 +1281,20 @@ struct ContentView: View {
         // Hide keyboard when submitting
         isTextFieldFocused = false
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-        service.streamQuestion(query: query)
-        performImageSearch()
+        
+        // Use trimmed query
+        service.streamQuestion(query: trimmedQuery)
+        performImageSearch(query: trimmedQuery) // Pass trimmed query
         
         withAnimation {
             isSearchFocused = false
             isTyping = true
             selectedConversationId = nil
         }
+        
+        // Clear the query field AFTER using it
+        query = ""
+        showClearButton = false
     }
     
     // Start a brand new chat, clearing everything
@@ -1261,6 +1312,14 @@ struct ContentView: View {
             synthesisContent = ""
             isPaperAnalysisComplete = false
             isPaperAnalysisExpanded = true
+            
+            // Show the query input bar for the new chat
+            showQueryInputBar = true
+            
+            // Refocus text field if appropriate
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { // Slight delay after animation
+                self.isTextFieldFocused = true
+            }
         }
     }
     
@@ -1280,8 +1339,10 @@ struct ContentView: View {
     }
     
     // Image search function
-    private func performImageSearch() {
+    // Modify to accept query as parameter
+    private func performImageSearch(query: String) {
         let imageSearchService = ImageSearchService()
+        // Use the passed query
         imageSearchService.searchImagesAndArticles(query: query) { result in
             switch result {
             case .success(let response):
