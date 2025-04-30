@@ -113,8 +113,8 @@ struct ContentView: View {
                             }
                         }
                         
-                        // Input area always shown at bottom
-                        if showQueryInputBar {
+                        // Input area - only show if not viewing saved convo and state allows
+                        if showQueryInputBar && selectedConversationId == nil {
                             queryInputBar
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
