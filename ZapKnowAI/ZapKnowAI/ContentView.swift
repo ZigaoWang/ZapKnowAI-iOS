@@ -50,6 +50,10 @@ struct ContentView: View {
     // State to control query input bar visibility
     @State private var showQueryInputBar = true
     
+    // State for image viewer
+    @State private var showingImageViewer = false
+    @State private var selectedImageIndex = 0
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
@@ -445,6 +449,10 @@ struct ContentView: View {
                 // Save the completed conversation
                 saveCurrentConversation()
             }
+        }
+        // Present the Image Viewer as a full screen cover
+        .fullScreenCover(isPresented: $showingImageViewer) {
+            ImageViewerView(urls: imageUrls, currentIndex: $selectedImageIndex)
         }
     }
     
@@ -857,34 +865,37 @@ struct ContentView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
                                 ForEach(imageUrls, id: \.self) { url in
+                                    let index = imageUrls.firstIndex(of: url) ?? 0
                                     AsyncImage(url: URL(string: url)) { phase in
                                         switch phase {
                                         case .success(let image):
                                             image
                                                 .resizable()
                                                 .scaledToFill()
-                                                .frame(width: 200, height: 150)
-                                                .clipped()
-                                                .cornerRadius(12)
-                                                .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
                                         case .failure(_):
-                                            // Don't show anything if image failed to load
-                                            EmptyView()
-                                        case .empty:
+                                            // Placeholder for failed load
                                             Rectangle()
                                                 .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                                                .frame(width: 200, height: 150)
-                                                .cornerRadius(12)
-                                                .overlay(
-                                                    ProgressView()
-                                                        .progressViewStyle(CircularProgressViewStyle())
-                                                )
+                                                .overlay(Image(systemName: "photo").foregroundColor(.secondary))
+                                        case .empty:
+                                            // Loading placeholder
+                                            Rectangle()
+                                                .fill(userSettings.isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
+                                                .overlay(ProgressView())
                                         @unknown default:
                                             EmptyView()
                                         }
                                     }
-                                    .padding(.leading, imageUrls.firstIndex(of: url) == 0 ? 16 : 0)
-                                    .padding(.trailing, imageUrls.lastIndex(of: url) == imageUrls.count - 1 ? 16 : 0)
+                                    .frame(width: 200, height: 150)
+                                    .clipped()
+                                    .cornerRadius(12)
+                                    .shadow(color: userSettings.isDarkMode ? Color.black.opacity(0.3) : Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                                    .padding(.leading, index == 0 ? 16 : 0)
+                                    .padding(.trailing, index == imageUrls.count - 1 ? 16 : 0)
+                                    .onTapGesture {
+                                        selectedImageIndex = index
+                                        showingImageViewer = true
+                                    }
                                 }
                             }
                             .padding(.vertical, 8)
@@ -2122,6 +2133,63 @@ extension ContentView {
                     toastView.removeFromSuperview()
                 })
             })
+        }
+    }
+}
+
+// MARK: - Image Viewer View
+struct ImageViewerView: View {
+    let urls: [String]
+    @Binding var currentIndex: Int
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            // Black background for the viewer
+            Color.black.ignoresSafeArea()
+            
+            // TabView for swiping through images
+            TabView(selection: $currentIndex) {
+                ForEach(urls.indices, id: \.self) { index in
+                    AsyncImage(url: URL(string: urls[index])) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        case .failure(_):
+                            // Show error placeholder
+                            VStack {
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                Text("Failed to load image")
+                            }
+                            .foregroundColor(.gray)
+                        case .empty:
+                            // Show loading indicator
+                            ProgressView()
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                    .tag(index)
+                }
+            }
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+            .ignoresSafeArea()
+            
+            // Close button
+            Button {
+                presentationMode.wrappedValue.dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.title2.weight(.medium))
+                    .foregroundColor(.white)
+                    .padding(12)
+                    .background(Color.black.opacity(0.5))
+                    .clipShape(Circle())
+            }
+            .padding()
         }
     }
 }
