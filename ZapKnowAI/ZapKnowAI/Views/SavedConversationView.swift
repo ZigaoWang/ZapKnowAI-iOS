@@ -27,41 +27,6 @@ struct SavedConversationView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with back button and Centered Title using ZStack
-            ZStack {
-                // Centered Title
-                HStack {
-                    Spacer()
-                    Text(shortenConversationQuery(query))
-                         .font(.system(size: 17, weight: .semibold))
-                         .foregroundColor(isDarkMode ? .white : .black)
-                         // Ensure title doesn't overlap buttons if long
-                         .padding(.horizontal, 60) // Adjust padding as needed
-                         .lineLimit(1)
-                    Spacer()
-                }
-
-                // Leading Back Button
-                HStack {
-                    if let onBack = onBack {
-                        Button(action: onBack) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 16, weight: .medium))
-                                Text(NSLocalizedString("Back", comment: "Back button text"))
-                                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                            }
-                            .foregroundColor(Color(hex: "3B82F6"))
-                        }
-                    }
-                    Spacer() // Pushes button to the left
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(height: 44) // Standard nav bar height
-            .background(Color(hex: isDarkMode ? "121212" : "F9F9F9").ignoresSafeArea(.container, edges: .top))
-
             ScrollView {
                 VStack(spacing: 20) {
                     // Original Query Section (optional - could be in header)

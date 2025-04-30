@@ -54,6 +54,9 @@ struct ContentView: View {
     @State private var showingImageViewer = false
     @State private var selectedImageIndex = 0
     
+    // State to hold the query that was actually submitted for saving
+    @State private var lastSubmittedQuery = ""
+    
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
@@ -446,7 +449,7 @@ struct ContentView: View {
                     isTyping = false
                 }
                 
-                // Save the completed conversation
+                // Save the completed conversation using the captured query
                 saveCurrentConversation()
             }
         }
@@ -745,7 +748,11 @@ struct ContentView: View {
                         .frame(height: 24)
                     
                     Button(action: {
+                        // Check if query is empty *before* trimming
                         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // Re-introduce trimmedQuery variable
+                            let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+                            
                             // Hide the input bar IMMEDIATELY
                             withAnimation {
                                 showQueryInputBar = false
@@ -754,24 +761,27 @@ struct ContentView: View {
                             // Dismiss keyboard
                             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             
-                            // Save current query for notification purposes
-                            // Let's use the already trimmed query
-                            
                             // Start streaming
-                            service.streamQuestion(query: query.trimmingCharacters(in: .whitespacesAndNewlines))
+                            service.streamQuestion(query: trimmedQuery) // Use variable
                             
                             // Trigger image search as well
-                            performImageSearch(query: query.trimmingCharacters(in: .whitespacesAndNewlines)) // Pass trimmed query
+                            performImageSearch(query: trimmedQuery) // Use variable
                             
                             // Save conversation *shell* when query is sent (answer will be empty initially)
+                            // We might not need this shell saving if we save properly at the end.
+                            /* 
                             storageService.saveConversation(
-                                query: query.trimmingCharacters(in: .whitespacesAndNewlines), // Use trimmed query
+                                query: trimmedQuery, // Use trimmed query
                                 answer: "", // Initially empty answer
                                 papers: [], // Initially empty papers
                                 imageUrls: [], // Initially empty images
                                 articles: [], // Initially empty articles
                                 completedStages: [] // Initially empty stages
                             )
+                            */
+                            
+                            // CAPTURE the submitted query for saving later
+                            lastSubmittedQuery = trimmedQuery // Use variable
                             
                             // Update typing state etc. for UI feedback
                             withAnimation {
@@ -1336,11 +1346,12 @@ struct ContentView: View {
     
     // Save the current conversation when complete
     private func saveCurrentConversation() {
-        // Only save if we have an answer
-        guard !service.accumulatedTokens.isEmpty, !query.isEmpty else { return }
+        // Use the captured query, not the potentially cleared state variable
+        // Only save if we have an answer AND a submitted query
+        guard !service.accumulatedTokens.isEmpty, !lastSubmittedQuery.isEmpty else { return }
         
         storageService.saveConversation(
-            query: query,
+            query: lastSubmittedQuery, // Use the captured query
             answer: service.accumulatedTokens,
             papers: service.papers,
             imageUrls: imageUrls,
