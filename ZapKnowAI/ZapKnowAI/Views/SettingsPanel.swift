@@ -2,7 +2,19 @@ import SwiftUI
 
 struct SettingsPanel: View {
     @Binding var isVisible: Bool
+    @EnvironmentObject var userSettings: UserSettings
+    var onReset: () -> Void
     let isDarkMode: Bool
+    
+    // Helper to get app version
+    private var appVersion: String {
+        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "N/A"
+    }
+    
+    // Helper to get build number
+    private var appBuildNumber: String {
+        return Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "N/A"
+    }
     
     var body: some View {
         ZStack {
@@ -75,7 +87,7 @@ struct SettingsPanel: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                             
-                            Text(NSLocalizedString("版本 1.0.0", comment: "Version number"))
+                            Text("\(NSLocalizedString("Version", comment: "Version label")) \(appVersion) (\(appBuildNumber))")
                                 .font(.system(size: 14))
                                 .foregroundColor(isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280"))
                         }
