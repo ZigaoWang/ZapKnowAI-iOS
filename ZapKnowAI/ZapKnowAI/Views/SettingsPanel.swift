@@ -62,27 +62,14 @@ struct SettingsPanel: View {
                         .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))
                     
                     HStack(spacing: 16) {
-                        // App logo with fallback
-                        Group {
-                            if let _ = UIImage(named: "AppLogo") {
-                                Image("AppLogo")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 50, height: 50)
-                                    .cornerRadius(10)
-                            } else {
-                                Image(systemName: "bubble.left.and.bubble.right.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(Color(hex: "3B82F6"))
-                                    .frame(width: 50, height: 50)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(isDarkMode ? Color(hex: "2A2A2A") : Color(hex: "F3F4F6"))
-                                    )
-                            }
-                        }
+                        // App icon
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                            .cornerRadius(10)
                         
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading) {
                             Text(NSLocalizedString("知道 AI", comment: "App name"))
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(isDarkMode ? .white : Color(hex: "111827"))

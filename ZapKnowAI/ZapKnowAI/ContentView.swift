@@ -149,9 +149,16 @@ struct ContentView: View {
                             VStack(spacing: 0) {
                                 // Header area with improved design
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text(NSLocalizedString("知道 AI", comment: "App name"))
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
+                                    HStack { // Added HStack to include AppIcon
+                                        Image("AppLogo")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 30, height: 30) // Adjust size as needed
+                                            .cornerRadius(6) // Optional: if you want rounded corners
+                                        Text(NSLocalizedString("知道 AI", comment: "App name"))
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
+                                    }
                                     
                                     Text(NSLocalizedString("你的研究伙伴", comment: "App subtitle"))
                                         .font(.system(size: 16))
@@ -484,27 +491,13 @@ struct ContentView: View {
                         }
                     
                     VStack(spacing: 20) {
-                        // App logo with subtle glow
-                        Group {
-                            if let _ = UIImage(named: "AppLogo") {
-                                Image("AppLogo")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .cornerRadius(16)
-                                    .shadow(color: Color.white.opacity(0.3), radius: 10, x: 0, y: 0)
-                            } else {
-                                Image(systemName: "bubble.left.and.bubble.right.fill")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.white)
-                                    .frame(width: 80, height: 80)
-                                    .background(
-                                        Circle()
-                                            .fill(Color(hex: "3B82F6").opacity(0.8))
-                                            .shadow(color: Color.white.opacity(0.3), radius: 10, x: 0, y: 0)
-                                    )
-                            }
-                        }
+                        // App icon with subtle glow
+                        Image("AppLogo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 80, height: 80)
+                            .cornerRadius(16)
+                            .shadow(color: Color.white.opacity(0.3), radius: 10, x: 0, y: 0)
                         
                         Text(NSLocalizedString("知道 AI", comment: "App name"))
                             .font(.system(size: 32, weight: .bold))
