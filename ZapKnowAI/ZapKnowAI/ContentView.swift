@@ -16,8 +16,6 @@ struct ContentView: View {
     @State private var isSearchFocused = false
     @State private var showClearButton = false
     @State private var isTyping = false
-    // Using userSettings.isDarkMode instead of local state
-    // @State private var isDarkMode = false
     @State private var showSettings = false
     @State private var imageUrls: [String] = []
     @State private var articles: [Article] = []
@@ -128,8 +126,8 @@ struct ContentView: View {
                                         Image("AppLogo")
                                             .resizable()
                                             .scaledToFit()
-                                            .frame(width: 30, height: 30) // Adjust size as needed
-                                            .cornerRadius(6) // Optional: if you want rounded corners
+                                            .frame(width: 30, height: 30)
+                                            .cornerRadius(6)
                                         Text(NSLocalizedString("知道 AI", comment: "App name"))
                                             .font(.system(size: 24, weight: .bold))
                                             .foregroundColor(userSettings.isDarkMode ? .white : Color(hex: "111827"))
@@ -182,7 +180,6 @@ struct ContentView: View {
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 20)
                                 
-                                // Search box with improved design
                                 HStack {
                                     Image(systemName: "magnifyingglass")
                                         .font(.system(size: 16))
@@ -600,7 +597,6 @@ struct ContentView: View {
 
             Spacer()
 
-            // App title (shown when no conversation is selected)
             if selectedConversationId == nil {
                 HStack(spacing: 8) {
                     Text(NSLocalizedString("知道 AI", comment: "App name"))
@@ -611,12 +607,10 @@ struct ContentView: View {
             
             Spacer()
             
-            // Settings button
             Button {
                 let generator = UIImpactFeedbackGenerator(style: .light)
                 generator.impactOccurred()
                 
-                // Dismiss keyboard when opening settings
                 isTextFieldFocused = false
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 
@@ -638,23 +632,17 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            // Use a clear background with no shadow for the top bar
             Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
         )
     }
     
-    // Update query input bar to use the focus state
     private var queryInputBar: some View {
         VStack(spacing: 0) {
             Divider()
                 .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
             
             HStack(alignment: .center, spacing: 12) {
-                // Enhanced search bar with subtle animation
                 HStack(spacing: 10) {
-                    // Capture the current query for later use
-                    let currentQuery = query
-                    
                     TextField(placeholderText, text: $query, axis: .vertical)
                         .textFieldStyle(PlainTextFieldStyle())
                         .font(.system(size: 16))
@@ -664,7 +652,6 @@ struct ContentView: View {
                         .focused($isTextFieldFocused)
                         .lineLimit(5)
                         .onChange(of: query) { oldValue, newValue in
-                            // Show clear button if text is not empty
                             showClearButton = !query.isEmpty
                         }
                     
@@ -684,63 +671,35 @@ struct ContentView: View {
                         .frame(height: 24)
                     
                     Button(action: {
-                        // Check if query is empty *before* trimming
                         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            // Re-introduce trimmedQuery variable
                             let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
                             
-                            // Hide the input bar IMMEDIATELY
                             withAnimation {
                                 showQueryInputBar = false
                             }
                             
-                            // Dismiss keyboard
                             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             
-                            // Start streaming
-                            service.streamQuestion(query: trimmedQuery) // Use variable
+                            service.streamQuestion(query: trimmedQuery)
+                            performImageSearch(query: trimmedQuery)
                             
-                            // Trigger image search as well
-                            performImageSearch(query: trimmedQuery) // Use variable
+                            lastSubmittedQuery = trimmedQuery
                             
-                            // Save conversation *shell* when query is sent (answer will be empty initially)
-                            // We might not need this shell saving if we save properly at the end.
-                            /* 
-                            storageService.saveConversation(
-                                query: trimmedQuery, // Use trimmed query
-                                answer: "", // Initially empty answer
-                                papers: [], // Initially empty papers
-                                imageUrls: [], // Initially empty images
-                                articles: [], // Initially empty articles
-                                completedStages: [] // Initially empty stages
-                            )
-                            */
-                            
-                            // CAPTURE the submitted query for saving later
-                            lastSubmittedQuery = trimmedQuery // Use variable
-                            
-                            // Update typing state etc. for UI feedback
                             withAnimation {
                                 isSearchFocused = false
                                 isTyping = true
-                                selectedConversationId = nil // Ensure we're viewing the new response area
+                                selectedConversationId = nil
                             }
 
-                            // If notifications are enabled, show alert that the user can close the app
                             if userSettings.notificationsEnabled {
-                                // Set a brief delay to allow the service to start
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                                    // Show a toast or alert that the request is being processed
                                     let alertMessage = NSLocalizedString("You can close the app. You'll receive a notification when the answer is ready.", comment: "Alert for background processing")
                                     showToast(message: alertMessage)
                                 }
                             }
                             
-                            // Clear query *after* using it
                             query = ""
                             showClearButton = false
-                            
-                            // showQueryInputBar = false // Moved earlier
                         }
                     }) {
                         Image(systemName: "arrow.up.circle.fill")
@@ -1057,11 +1016,9 @@ struct ContentView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 if isTyping {
-                    // Typing indicator with improved animation
                     TypingIndicator()
                         .frame(width: 50, height: 30)
                 } else {
-                    // Status icon
                     Image(systemName: "circle.dashed")
                         .font(.system(size: 16))
                         .foregroundColor(Color(hex: "3B82F6"))
@@ -1088,12 +1045,10 @@ struct ContentView: View {
             // Add a Notify Me button if we're processing and notifications aren't enabled yet
             if service.isStreaming && !userSettings.notificationsEnabled {
                 Button(action: {
-                    // Request notification permissions
                     NotificationService.shared.requestPermissions { granted in
                         userSettings.notificationsEnabled = granted
                         
                         if granted {
-                            // Show confirmation toast
                             let message = NSLocalizedString("You'll be notified when your answer is ready. You can close the app now.", comment: "Notification confirmation")
                             showToast(message: message)
                             
@@ -1102,7 +1057,6 @@ struct ContentView: View {
                                 NotificationService.shared.trackRequest(requestId: requestId, query: service.currentQuery ?? "")
                             }
                         } else {
-                            // Show error toast
                             let message = NSLocalizedString("Please enable notifications in Settings to use this feature.", comment: "Notification error")
                             showToast(message: message)
                         }
@@ -1137,7 +1091,6 @@ struct ContentView: View {
         // Otherwise use the combined view
         return AnyView(
             VStack(alignment: .leading, spacing: 16) {
-                // Answer header with enhanced design
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
@@ -1155,7 +1108,6 @@ struct ContentView: View {
                     
                     Spacer()
                     
-                    // Show generating status when generating answer
                     if isGeneratingResponse && service.accumulatedTokens.isEmpty {
                         TypingIndicator()
                             .frame(width: 40, height: 20)
@@ -1257,7 +1209,6 @@ struct ContentView: View {
     // Start a brand new chat, clearing everything
     private func onNewChat() {
         withAnimation(.easeOut(duration: 0.25)) {
-            // Clear all data
             query = ""
             service.reset()
             imageUrls = []
@@ -1270,10 +1221,8 @@ struct ContentView: View {
             isPaperAnalysisComplete = false
             isPaperAnalysisExpanded = true
             
-            // Show the query input bar for the new chat
             showQueryInputBar = true
             
-            // Refocus text field if appropriate
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { // Slight delay after animation
                 self.isTextFieldFocused = true
             }
@@ -1287,7 +1236,7 @@ struct ContentView: View {
         guard !service.accumulatedTokens.isEmpty, !lastSubmittedQuery.isEmpty else { return }
         
         storageService.saveConversation(
-            query: lastSubmittedQuery, // Use the captured query
+            query: lastSubmittedQuery,
             answer: service.accumulatedTokens,
             papers: service.papers,
             imageUrls: imageUrls,
@@ -1316,7 +1265,6 @@ struct ContentView: View {
     
     // Reset all function
     private func resetAll() {
-        // Clear all data
         query = ""
         service.reset()
         imageUrls = []
@@ -1329,10 +1277,8 @@ struct ContentView: View {
         isPaperAnalysisComplete = false
         isPaperAnalysisExpanded = true
         
-        // Clear saved conversations
         storageService.deleteAllConversations()
         
-        // Add haptic feedback
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
     }
@@ -1462,7 +1408,6 @@ struct ContentView: View {
     // Synthesis View (final answer)
     private var synthesisView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Answer header with enhanced design
             HStack(spacing: 12) {
                 ZStack {
                     Circle()
@@ -1480,17 +1425,14 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                // Show generating status when generating answer
                 if isGeneratingResponse && isPaperAnalysisComplete && synthesisContent.isEmpty {
                     TypingIndicator()
                         .frame(width: 40, height: 20)
                 }
                 
-                // Copy button with enhanced design
                 if !synthesisContent.isEmpty {
                     Button(action: {
                         UIPasteboard.general.string = synthesisContent
-                        // Add haptic feedback
                         let generator = UINotificationFeedbackGenerator()
                         generator.notificationOccurred(.success)
                     }) {
@@ -1515,14 +1457,11 @@ struct ContentView: View {
             .padding(.horizontal, 24)
             .padding(.top, 24)
             
-            // Answer content with enhanced markdown styling
             VStack(alignment: .leading, spacing: 0) {
-                // Markdown content with improved styling
                 MarkdownView_Native(markdown: synthesisContent)
                     .padding(24)
                     .environment(\.colorScheme, userSettings.isDarkMode ? .dark : .light)
                 
-                // Typing indicator - only show when actively generating synthesis
                 if isTyping && isGeneratingResponse && isPaperAnalysisComplete && synthesisContent.isEmpty {
                     HStack {
                         TypingIndicator()
@@ -1625,13 +1564,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background that matches the app's theme
                 Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                     .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Theme section
                         settingsSection(title: NSLocalizedString("显示设置", comment: "Display settings")) {
                             VStack(spacing: 0) {
                                 Button(action: {
@@ -1672,7 +1609,6 @@ struct SettingsView: View {
                                     .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.05))
                                     .padding(.horizontal, 16)
                                 
-                                // Notification toggle
                                 Button(action: {
                                     let generator = UIImpactFeedbackGenerator(style: .light)
                                     generator.impactOccurred()
@@ -1681,10 +1617,8 @@ struct SettingsView: View {
                                     if !userSettings.notificationsEnabled {
                                         NotificationService.shared.requestPermissions { granted in
                                             DispatchQueue.main.async {
-                                                // Only enable if permission was granted
                                                 userSettings.notificationsEnabled = granted
                                                 
-                                                // If permission was denied, show an alert
                                                 if !granted {
                                                     let alert = UIAlertController(
                                                         title: NSLocalizedString("通知权限被拒绝", comment: "Notification permission denied"),
@@ -1752,7 +1686,6 @@ struct SettingsView: View {
                                     let generator = UIImpactFeedbackGenerator(style: .medium)
                                     generator.impactOccurred()
                                     
-                                    // Show confirmation alert
                                     let alert = UIAlertController(
                                         title: "重置所有对话",
                                         message: "此操作将删除所有保存的对话历史，且不可恢复。确定要继续吗？",
@@ -1875,14 +1808,12 @@ struct SettingsView: View {
                                     .background(userSettings.isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.1))
                                     .padding(.horizontal, 16)
                                 
-                                // Developer info
                                 VStack(alignment: .leading, spacing: 12) {
                                     Text(NSLocalizedString("开发者", comment: "Developer section"))
                                         .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.9) : Color(hex: "374151"))
                                     
                                     HStack(spacing: 16) {
-                                        // Developer profile image
                                         Image("DevProfile")
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
@@ -1903,7 +1834,6 @@ struct SettingsView: View {
                                         Spacer()
                                     }
                                     
-                                    // Links section
                                     VStack(spacing: 12) {
                                         Link(destination: URL(string: "https://www.zigao.wang")!) {
                                             HStack {
@@ -1947,7 +1877,6 @@ struct SettingsView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 
-                                // Copyright
                                 Text(" 2025 Zigao Wang. All rights reserved.")
                                     .font(.system(size: 14))
                                     .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.5) : Color(hex: "6B7280"))
@@ -1995,7 +1924,6 @@ struct SettingsView: View {
         .preferredColorScheme(userSettings.isDarkMode ? .dark : .light)
     }
     
-    // Helper function for creating settings sections
     private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
@@ -2006,7 +1934,6 @@ struct SettingsView: View {
         }
     }
     
-    // Helper function for feature rows in about section
     private func featureRow(iconName: String, text: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: iconName)
@@ -2027,7 +1954,6 @@ struct SettingsView: View {
     }
 }
 
-// Add a helper extension to check if a string is empty
 extension String {
     var isNotEmpty: Bool {
         return !self.isEmpty
@@ -2037,14 +1963,12 @@ extension String {
 // MARK: - Background Processing
 
 extension ContentView {
-    // Check if there are any active background requests when the app is opened
     private func checkForActiveBackgroundRequests() {
         // This could be enhanced to actually fetch the specific conversation
         // when returning to the app after a notification
         hasActiveBackgroundRequest = false
     }
     
-    // Show a toast message
     private func showToast(message: String) {
         let keyWindow = UIApplication.shared.connectedScenes
             .filter({$0.activationState == .foregroundActive})
@@ -2092,10 +2016,8 @@ struct ImageViewerView: View {
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            // Black background for the viewer
             Color.black.ignoresSafeArea()
             
-            // TabView for swiping through images
             TabView(selection: $currentIndex) {
                 ForEach(urls.indices, id: \.self) { index in
                     AsyncImage(url: URL(string: urls[index])) { phase in
@@ -2105,7 +2027,6 @@ struct ImageViewerView: View {
                                 .resizable()
                                 .scaledToFit()
                         case .failure(_):
-                            // Show error placeholder
                             VStack {
                                 Image(systemName: "photo")
                                     .font(.largeTitle)
@@ -2113,7 +2034,6 @@ struct ImageViewerView: View {
                             }
                             .foregroundColor(.gray)
                         case .empty:
-                            // Show loading indicator
                             ProgressView()
                         @unknown default:
                             EmptyView()
@@ -2125,7 +2045,6 @@ struct ImageViewerView: View {
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
             .ignoresSafeArea()
             
-            // Close button
             Button {
                 presentationMode.wrappedValue.dismiss()
             } label: {
