@@ -22,45 +22,35 @@ struct ContentView: View {
     @State private var imageUrls: [String] = []
     @State private var articles: [Article] = []
     
-    // Focus state for the text field
     @FocusState private var isTextFieldFocused: Bool
     
-    // Sidebar and conversation states
     @State private var showSidebar = false
     @State private var selectedConversationId: UUID? = nil
     
-    // Animation states
     @State private var animateGradient = false
     
-    // Collapse/expand states
     @State private var isSourcesExpanded = false
     @State private var isPapersExpanded = false
     @State private var isImagesExpanded = false
     @State private var isArticlesExpanded = false
     
-    // Response content separation states
     @State private var paperAnalysisContent = ""
     @State private var synthesisContent = ""
     @State private var isPaperAnalysisComplete = false
     @State private var isPaperAnalysisExpanded = true
     
-    // Background processing state
     @State private var hasActiveBackgroundRequest = false
     
-    // State to control query input bar visibility
     @State private var showQueryInputBar = true
     
-    // State for image viewer
     @State private var showingImageViewer = false
     @State private var selectedImageIndex = 0
     
-    // State to hold the query that was actually submitted for saving
     @State private var lastSubmittedQuery = ""
     
     private let searchBarHeight: CGFloat = 50
     private let placeholderText = NSLocalizedString("Ask a question...", comment: "Search bar placeholder text")
     
-    // Date formatter
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
@@ -68,7 +58,6 @@ struct ContentView: View {
         return formatter
     }()
     
-    // Example questions
     private let exampleQuestions = [
         NSLocalizedString("癌症治疗的最新研究进展是什么?", comment: "Example question about cancer research"),
         NSLocalizedString("量子计算如何应用于密码学?", comment: "Example question about quantum computing"),
@@ -78,25 +67,19 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Main background - using same color for entire background
             Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                 .ignoresSafeArea()
             
-            // Main content
             VStack(spacing: 0) {
-                // Top navigation area
                 topBar
                 
-                // Main content
                 ZStack {
-                    // Use the same background color for content area
                     Color(hex: userSettings.isDarkMode ? "121212" : "F9F9F9")
                         .ignoresSafeArea()
                     
                     VStack(spacing: 0) {
                         if let selectedId = selectedConversationId,
                            let conversation = storageService.savedConversations.first(where: { $0.id == selectedId }) {
-                            // Show saved conversation
                             SavedConversationView(
                                 conversation: conversation,
                                 isDarkMode: userSettings.isDarkMode,
@@ -108,15 +91,12 @@ struct ContentView: View {
                             )
                         } else {
                             if service.accumulatedTokens.isEmpty && imageUrls.isEmpty && articles.isEmpty && service.papers.isEmpty && !service.isStreaming {
-                                // Enhanced empty state / welcome screen
                                 welcomeView
                             } else {
-                                // Active chat with results
                                 chatResultsView
                             }
                         }
                         
-                        // Input area - only show if not viewing saved convo and state allows
                         if showQueryInputBar && selectedConversationId == nil {
                             queryInputBar
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -127,9 +107,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            // Overlay elements with proper z-index
             ZStack {
-                // Sidebar drawer overlay
                 if showSidebar {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
@@ -137,19 +115,16 @@ struct ContentView: View {
                             withAnimation(.easeOut(duration: 0.25)) {
                                 showSidebar = false
                                 
-                                // Dismiss keyboard
                                 isTextFieldFocused = false
                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                             }
                         }
                     
-                    // Drawer content with fixed animation
                     HStack(spacing: 0) {
                         ZStack(alignment: .topTrailing) {
                             VStack(spacing: 0) {
-                                // Header area with improved design
                                 VStack(alignment: .leading, spacing: 8) {
-                                    HStack { // Added HStack to include AppIcon
+                                    HStack {
                                         Image("AppLogo")
                                             .resizable()
                                             .scaledToFit()
@@ -169,7 +144,6 @@ struct ContentView: View {
                                 .padding(.horizontal, 20)
                                 .padding(.bottom, 20)
                 
-                                // New Chat button with enhanced design
                                 Button(action: {
                                     onNewChat()
                                     withAnimation(.easeOut(duration: 0.25)) {
@@ -231,7 +205,6 @@ struct ContentView: View {
                                     .padding(.vertical, 16)
                                     .padding(.horizontal, 20)
                                 
-                                // Section title with improved styling
                                 Text(NSLocalizedString("今天", comment: "Today section header"))
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(userSettings.isDarkMode ? .white.opacity(0.8) : Color(hex: "6B7280"))
@@ -239,9 +212,7 @@ struct ContentView: View {
                                     .padding(.horizontal, 20)
                                     .padding(.bottom, 8)
                                 
-                                // Conversations list with improved styling
                                 if storageService.savedConversations.isEmpty {
-                                    // Empty state with improved visual
                                     VStack(spacing: 20) {
                                         ZStack {
                                             Circle()
@@ -265,12 +236,10 @@ struct ContentView: View {
                                     .padding(.horizontal, 20)
                                     .frame(maxWidth: .infinity)
                                 } else {
-                                    // List of conversations
                                     ScrollView {
                                         LazyVStack(spacing: 8) {
                                             ForEach(storageService.savedConversations.sorted(by: { $0.timestamp > $1.timestamp })) { conversation in
                                                 HStack(spacing: 12) {
-                                                    // Icon with enhanced design
                                                     ZStack {
                                                         Circle()
                                                             .fill(selectedConversationId == conversation.id ? Color(hex: "3B82F6").opacity(0.2) : (userSettings.isDarkMode ? Color(hex: "1E1E1E") : Color(hex: "F3F4F6")))
@@ -281,7 +250,6 @@ struct ContentView: View {
                                                             .foregroundColor(selectedConversationId == conversation.id ? Color(hex: "3B82F6") : (userSettings.isDarkMode ? Color.white.opacity(0.6) : Color(hex: "6B7280")))
                                                     }
                                                     
-                                                    // Text content with enhanced typography
                                                     VStack(alignment: .leading, spacing: 4) {
                                                         Text(shortenConversationQuery(conversation.query))
                                                             .font(.system(size: 14, weight: selectedConversationId == conversation.id ? .semibold : .medium))
@@ -313,7 +281,6 @@ struct ContentView: View {
                                                     withAnimation(.easeOut(duration: 0.25)) {
                                                         showSidebar = false
                                                         
-                                                        // Dismiss keyboard
                                                         isTextFieldFocused = false
                                                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                     }
@@ -326,9 +293,7 @@ struct ContentView: View {
                                 
                                 Spacer()
                                 
-                                // User profile with improved design
                                 HStack(spacing: 12) {
-                                    // User avatar with gradient
                                     ZStack {
                                         Circle()
                                             .fill(
@@ -348,7 +313,6 @@ struct ContentView: View {
                                             .foregroundColor(.white)
                                     }
                                     
-                                    // User name and role
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(userSettings.userName.isEmpty ? NSLocalizedString("游客", comment: "Guest user") : userSettings.userName)
                                             .font(.system(size: 17, weight: .medium))
@@ -361,12 +325,10 @@ struct ContentView: View {
                                     
                                     Spacer()
                                     
-                                    // Settings
                                     Button(action: {
                                         let generator = UIImpactFeedbackGenerator(style: .light)
                                         generator.impactOccurred()
                                         
-                                        // Dismiss keyboard when opening settings
                                         isTextFieldFocused = false
                                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                         
@@ -390,12 +352,10 @@ struct ContentView: View {
                                 .background(userSettings.isDarkMode ? Color(hex: "121212") : Color(hex: "FFFFFF"))
                             }
                             
-                            // Close button with improved design
                             Button {
                                 withAnimation(.easeOut(duration: 0.25)) {
                                     showSidebar = false
                                     
-                                    // Dismiss keyboard
                                     isTextFieldFocused = false
                                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                 }
@@ -422,7 +382,6 @@ struct ContentView: View {
                     .transition(.move(edge: .leading))
                 }
                 
-                // Settings as a full screen page instead of an overlay
                 if showSettings {
                     SettingsView(
                         isDarkMode: $userSettings.isDarkMode,
@@ -439,40 +398,32 @@ struct ContentView: View {
         .animation(.easeOut(duration: 0.25), value: showSidebar)
         .animation(.easeOut(duration: 0.25), value: showSettings)
         .onAppear {
-            // Auto focus the text field when the app opens but only on the main screen
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 if !showSettings && !showSidebar && selectedConversationId == nil {
                     self.isTextFieldFocused = true
                 }
             }
             
-            // Check for active background requests when returning to the app
             checkForActiveBackgroundRequests()
         }
         .onChange(of: service.isStreaming) { _, isStreaming in
             if !isStreaming && !service.accumulatedTokens.isEmpty {
-                // When streaming completes, update UI and save conversation
                 withAnimation {
                     isTyping = false
                 }
                 
-                // Save the completed conversation using the captured query
                 saveCurrentConversation()
             }
         }
-        // Present the Image Viewer as a full screen cover
         .fullScreenCover(isPresented: $showingImageViewer) {
             ImageViewerView(urls: imageUrls, currentIndex: $selectedImageIndex)
         }
     }
     
-    // Enhanced welcome screen but simpler and cooler
     private var welcomeView: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Clean, modern hero section with subtle gradient
                 ZStack {
-                    // Subtle animated gradient background
                     RoundedRectangle(cornerRadius: 16)
                         .fill(
                             LinearGradient(
@@ -491,7 +442,6 @@ struct ContentView: View {
                         }
                     
                     VStack(spacing: 20) {
-                        // App icon with subtle glow
                         Image("AppLogo")
                             .resizable()
                             .scaledToFit()
@@ -513,7 +463,6 @@ struct ContentView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
                 
-                // Example questions in a cleaner design
                 VStack(alignment: .leading, spacing: 16) {
                     Text(NSLocalizedString("试试以下问题", comment: "Try these questions"))
                         .font(.system(size: 18, weight: .bold))
@@ -565,7 +514,6 @@ struct ContentView: View {
         .scrollDismissesKeyboard(.immediately)
     }
     
-    // Helper function for welcome page feature rows
     private func featureRow(icon: String, title: String, description: String) -> some View {
         HStack(alignment: .top, spacing: 16) {
             ZStack {
@@ -601,7 +549,6 @@ struct ContentView: View {
         )
     }
     
-    // Helper function to determine icon for example questions
     private func categoryIcon(for question: String) -> String {
         if question.contains("癌症") {
             return "heart.text.square.fill"
@@ -616,15 +563,12 @@ struct ContentView: View {
         }
     }
     
-    // Updated top navigation bar to fix color inconsistency
     private var topBar: some View {
         HStack(spacing: 16) {
-            // Menu button
             Button {
                 withAnimation(.easeOut(duration: 0.25)) {
                     showSidebar.toggle()
                     
-                    // Dismiss keyboard when opening sidebar
                     isTextFieldFocused = false
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }
@@ -640,7 +584,6 @@ struct ContentView: View {
             }
             .buttonStyle(ScaleButtonStyle())
             
-            // New Chat button
             Button {
                 onNewChat()
             } label: {
